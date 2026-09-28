@@ -1,8 +1,5 @@
-// Procedural cloud lettering: a word traced with hundreds of lit puffs,
-// painted to match the cumulus in the footage (bright crowns, blue-grey bellies).
-
 const TAU = Math.PI * 2;
-const F = 300; // design font size; all puff geometry lives in this space
+const F = 300;
 
 function mulberry32(seed) {
   return function () {
@@ -17,8 +14,6 @@ function mulberry32(seed) {
 const easeOutExpo = (x) => (x >= 1 ? 1 : 1 - Math.pow(2, -10 * x));
 const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
 
-// A lumpy puff, not a disc: several soft lobes merged, filled with a
-// top-lit vertical ramp so every puff carries its own light.
 function makeSprite(rand, top, bottom, lobes, core = 0.5) {
   const S = 256;
   const c = document.createElement('canvas');
@@ -83,12 +78,10 @@ function buildMask(text, family) {
       inkY += Math.floor(i / w);
     }
   }
-  // vertical centre of the ink, so a lone i-dot doesn't pull the word off-centre
   const massY = ink ? inkY / ink : h / 2;
   return { w, h, inside, pad, asc, desc, massY };
 }
 
-// Two-pass chamfer distance to the nearest outside pixel.
 function distanceInside({ w, h, inside }) {
   const INF = 1e6;
   const d = new Float32Array(w * h);
@@ -139,7 +132,6 @@ function buildPuffs(mask, rand) {
     grid.get(k).push(p);
   };
 
-  // Body: variable-radius packing along each stroke's spine outward.
   const cand = [];
   for (let y = 2; y < h - 2; y += 3) {
     for (let x = 2; x < w - 2; x += 3) {
@@ -153,7 +145,6 @@ function buildPuffs(mask, rand) {
     if (fits(x, y, r, 0.58)) add({ x, y, r, kind: 0 });
   }
 
-  // Billows: cauliflower crowns on edges that face the sky, tight bellies below.
   const edge = [];
   for (let y = 2; y < h - 2; y++) {
     for (let x = 2; x < w - 2; x++) {
@@ -175,14 +166,13 @@ function buildPuffs(mask, rand) {
       r = F * (0.055 + rand() * 0.035);
       oy = -r * (0.25 + rand() * 0.12);
     } else if (down) {
-      continue; // bellies stay flat
+      continue;
     } else {
-      continue; // sides stay smooth; the crowns carry the billow
+      continue;
     }
     if (fits(x + ox, y + oy, r, 1.05)) add({ x: x + ox, y: y + oy, r, kind: up ? 1 : 2 });
   }
 
-  // Wisps: loose vapour that breaks the silhouette.
   let tries = 0, wisps = 0;
   while (wisps < 10 && tries++ < 6000) {
     const [ex, ey, up] = edge[Math.floor(rand() * edge.length)];
@@ -197,14 +187,12 @@ function buildPuffs(mask, rand) {
   const maxX = w;
   const cx = w / 2, cy = mask.pad + mask.asc * 0.55;
   for (const p of puffs) {
-    // dispersal: outward from the word's heart, lifted, carried downwind
     const ox = (p.x - cx) / w, oy = (p.y - cy) / h;
     const len = Math.hypot(ox, oy) || 1;
     const reach = F * (0.35 + rand() * 0.5);
     p.dx = (0.5 + (ox / len) * 0.2 + (rand() - 0.5) * 0.25) * reach;
     p.dy = (-0.28 + (oy / len) * 0.15 + (rand() - 0.5) * 0.2) * reach;
     p.grow = 0.35 + rand() * 0.45;
-    // the wind comes from the left: the upwind edge lets go first
     p.lag = (p.x / w) * 0.3 + rand() * 0.08;
     p.ph = rand() * TAU;
     p.ph2 = rand() * TAU;
@@ -212,7 +200,6 @@ function buildPuffs(mask, rand) {
     p.v = Math.floor(rand() * 6);
     p.born = 0.1 + (p.x / maxX) * 1.15 + rand() * 0.45 + (p.kind >= 3 ? 0.5 : 0);
   }
-  // Paint bottom-up so higher puffs lap over lower ones.
   puffs.sort((a, b) => b.y + b.r - (a.y + a.r));
   return puffs;
 }
@@ -230,8 +217,6 @@ export class CloudWord {
       this.vapour.push(makeSprite(rand, '#ffffff', '#d6e4f6', 9, 0));
     }
     this.aspect = this.mask.h / this.mask.w;
-    // where the lobes actually paint (a lobe is drawn 0.12r high and its soft edge reads ~1.3r out);
-    // loose vapour is left out so a stray wisp can't move the layout
     let l = Infinity, t = Infinity, rgt = -Infinity, b = -Infinity;
     for (const p of this.puffs) {
       if (p.kind === 3) continue;
@@ -244,15 +229,12 @@ export class CloudWord {
     this.ink = { l, t, r: rgt, b };
   }
 
-  // cssWidth sizes the word itself; the canvas carries extra sky around it
-  // so dispersing puffs never hit an edge.
   resize(cssWidth, dpr) {
     const M = F * 1.1;
     this.M = M;
     const unit = cssWidth / this.mask.w;
     this.cssW = (this.mask.w + M * 2) * unit;
     this.cssH = (this.mask.h + M * 2) * unit;
-    // offsets from the canvas centre (margins are symmetric, so it is also the mask centre)
     const { h, pad, asc, massY } = this.mask;
     this.baseY = (pad + asc - h / 2) * unit;
     this.massY = (massY - h / 2) * unit;
@@ -269,7 +251,6 @@ export class CloudWord {
     this.scale = this.canvas.width / (this.mask.w + M * 2);
   }
 
-  // spread: 0 = formed word, 1 = fully dispersed on the wind
   render(t, tilt, still, spread = 0) {
     const { ctx, scale, puffs } = this;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -286,7 +267,6 @@ export class CloudWord {
       const p = puffs[i];
       const life = still ? 1 : easeOutExpo(clamp01((t - p.born) / 1.6));
       const drift = still ? 0 : 1;
-      // each puff lets go at its own moment, so the word tears rather than fades
       const s = clamp01((spread - p.lag * 0.6) / (1 - p.lag * 0.6));
       const e = s * s * (3 - 2 * s);
       L[i] = life * (1 - e) * (1 - e * 0.3);
@@ -302,7 +282,6 @@ export class CloudWord {
       R[i] = p.r * (0.35 + 0.65 * life) * (1 + drift * Math.sin(t * 0.5 + p.ph2) * 0.035) * (1 + e * p.grow);
     }
 
-    // Never let a puff meet the canvas edge: fade it out while it still has sky around it.
     const M = this.M, x0 = -M, y0 = -M, x1 = this.mask.w + M, y1 = this.mask.h + M;
     const room = F * 0.3;
     for (let i = 0; i < n; i++) {
@@ -311,15 +290,12 @@ export class CloudWord {
       L[i] *= clamp01(d / room);
     }
 
-    // 1. vapour around the silhouette
     for (let i = 0; i < n; i++) {
       if (puffs[i].kind !== 3 || L[i] < 0.001) continue;
       const r = R[i] * 1.6;
       ctx.globalAlpha = 0.16 * L[i];
       ctx.drawImage(this.vapour[puffs[i].v], X[i] - r, Y[i] - r, r * 2, r * 2);
     }
-    // 2. lobes, painted bottom-up: each lobe's shaded belly creases the one below it.
-    // As a puff lets go it shears downwind and softens into vapour.
     for (let i = 0; i < n; i++) {
       if (puffs[i].kind === 3 || L[i] < 0.001) continue;
       const r = R[i], e = E[i], v = puffs[i].v;
@@ -335,7 +311,6 @@ export class CloudWord {
       }
     }
 
-    // flatten the base: cumulus sit on a shaded, level floor
     ctx.globalAlpha = 1 - clamp01(spread * 1.5);
     ctx.globalCompositeOperation = 'source-atop';
     const { h, pad, asc } = this.mask;
