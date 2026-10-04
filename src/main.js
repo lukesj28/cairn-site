@@ -6,8 +6,9 @@ import { CloudWord } from './cloud.js';
 import { Cairn } from './cairn.js';
 import appleLogo from './icons/apple.svg?raw';
 import arrowUp from '@phosphor-icons/core/bold/arrow-up-bold.svg?raw';
+import cross from '@phosphor-icons/core/bold/x-bold.svg?raw';
 
-for (const [name, svg] of [['apple', appleLogo], ['arrow-up', arrowUp]]) {
+for (const [name, svg] of [['apple', appleLogo], ['arrow-up', arrowUp], ['x', cross]]) {
   for (const el of document.querySelectorAll(`[data-icon="${name}"]`)) el.innerHTML = svg;
 }
 
@@ -74,7 +75,18 @@ const clips = [t1Fwd, t1Rev, loop2, t2Fwd, t2Rev, loop3];
 const TILT_FPS = 60;
 const TILT_STEPS = Math.round(((TILT - 1) * TILT_FPS) / FPS);
 
-const cairn = new Cairn(document.getElementById('cairn'), document.getElementById('stones'), { reduceMotion });
+const stones = document.getElementById('stones');
+const cairn = new Cairn(document.getElementById('cairn'), stones, { reduceMotion });
+
+const kofi = document.getElementById('kofi');
+stones.addEventListener('stone', (e) => {
+  if (e.detail.name !== 'bottom') return;
+  const frame = kofi.querySelector('iframe');
+  if (!frame.src) frame.src = frame.dataset.src;
+  kofi.showModal();
+});
+kofi.querySelector('.kofi__close').addEventListener('click', () => kofi.close());
+kofi.addEventListener('click', (e) => e.target === kofi && kofi.close());
 
 const poster = new Image();
 poster.src = `${import.meta.env.BASE_URL}hero/poster.webp`;
@@ -206,7 +218,7 @@ let wheelQuiet = 0;
 addEventListener(
   'wheel',
   (e) => {
-    if (e.ctrlKey) return;
+    if (e.ctrlKey || kofi.open) return;
     e.preventDefault();
     clearTimeout(wheelQuiet);
     wheelQuiet = setTimeout(() => {
@@ -234,7 +246,7 @@ addEventListener(
 addEventListener(
   'touchmove',
   (e) => {
-    if (touchY == null) return;
+    if (touchY == null || kofi.open) return;
     const dy = touchY - e.touches[0].clientY;
     if (Math.abs(dy) < 24) return;
     touchY = null;
@@ -244,7 +256,7 @@ addEventListener(
 );
 
 addEventListener('keydown', (e) => {
-  if (e.altKey || e.metaKey || e.ctrlKey) return;
+  if (e.altKey || e.metaKey || e.ctrlKey || kofi.open) return;
   const onControl = e.target instanceof Element && e.target.closest('button, a, input, textarea');
   const k = e.key;
   let dir = 0;
@@ -287,6 +299,7 @@ addEventListener(
 );
 
 let vw = 0, vh = 0, dpr = 1, coverH = 0;
+const snap = (v) => Math.round(v * dpr) / dpr;
 let cover = { x: 0, y: 0, w: 0, h: 0 };
 let word = null;
 let getH = 56;
@@ -301,7 +314,7 @@ function layout() {
   const coverW = coverH / SRC_ASPECT;
   cover = { x: (vw - coverW) / 2, y: (vh - coverH) / 2, w: coverW, h: coverH };
   getH = get.offsetHeight;
-  const bar = Math.round(Math.min(28, Math.max(14, vh * 0.025)) * dpr) / dpr;
+  const bar = snap(Math.min(28, Math.max(14, vh * 0.025)));
   root.style.setProperty('--bar', `${bar}px`);
   cairn.layout(vw, vh, cover, dpr);
   if (word) word.resize(Math.min(vw < 700 ? vw * 0.84 : vw * 0.48, 860), dpr);
@@ -332,8 +345,10 @@ function tick(now) {
     const inkH = word.inkBottom - word.inkTop;
     const groupTop = vh * 0.485 - (inkH + gap + getH) / 2;
     const centre = groupTop - word.inkTop;
+    const wordX = snap(vw / 2 - word.cssW / 2 - word.inkCx);
+    const wordY = snap(centre - word.cssH / 2 - rise);
     wordCanvas.style.transform =
-      `translate3d(calc(-50% + ${(-word.inkCx).toFixed(2)}px), ${(centre - word.cssH / 2 - rise).toFixed(2)}px, 0) ` +
+      `translate3d(${wordX}px, ${wordY}px, 0) ` +
       `perspective(1400px) rotateX(${(-tilt.y * 5).toFixed(2)}deg) rotateY(${(tilt.x * 7).toFixed(2)}deg)`;
 
     const gone = reduceMotion.matches ? spread : Math.min(1, panAt(f) / GET_GONE);

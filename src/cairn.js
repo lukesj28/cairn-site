@@ -1,7 +1,10 @@
 import { STONES } from './cairn-stones.js';
 
 const SRC_W = 1920;
-const LABELS = ['Top stone', 'Second stone', 'Third stone', 'Bottom stone'];
+const DOES = ['read the docs', 'see the source', 'what’s new', 'buy me a coffee'];
+const LEAD = { rise: 20, run: 46, gap: 10, inset: 7, edge: 16 };
+const REACH = LEAD.rise + LEAD.run + LEAD.gap;
+const LANDS = { bottom: [868, 955] };
 const GLOW = { color: '#ffe3a0', reach: 150, bloom: 1, bloomBlur: 55, rim: 0.28, rimBlur: 40, rimWidth: 44, lift: 0.05, seamBlur: 16 };
 const ON = 0.06;
 const OFF = 0.14;
@@ -15,6 +18,16 @@ function box(points) {
     y1 = Math.max(y1, points[i + 1]);
   }
   return { x: Math.floor(x0), y: Math.floor(y0), w: Math.ceil(x1) - Math.floor(x0), h: Math.ceil(y1) - Math.floor(y0) };
+}
+
+function flank(points, { y, h }) {
+  let ax = Infinity, ay = 0;
+  for (let i = 0; i < points.length; i += 2) {
+    if (Math.abs(points[i + 1] - (y + h / 2)) > h * 0.2 || points[i] >= ax) continue;
+    ax = points[i];
+    ay = points[i + 1];
+  }
+  return [ax, ay];
 }
 
 function path(points, ox = 0, oy = 0, s = 1) {
@@ -33,13 +46,18 @@ export class Cairn {
     this.reduceMotion = reduceMotion;
     this.here = false;
     this.lit = -1;
+    group.style.setProperty('--rise', `${LEAD.rise}px`);
+    group.style.setProperty('--reach', `${REACH}px`);
     this.stones = STONES.map((s, i) => ({
       ...s,
       box: box(s.points),
       outline: new Path2D(path(s.points)),
       level: 0,
       button: this.#button(i),
+      tag: this.#tag(i),
+      lands: LANDS[s.name],
     }));
+    for (const st of this.stones) st.lands ??= flank(st.points, st.box);
     this.cover = { x: 0, y: 0, w: 0, h: 0 };
     this.dpr = 1;
     this.touch = false;
@@ -54,13 +72,13 @@ export class Cairn {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'stone';
-    b.setAttribute('aria-label', LABELS[i]);
+    b.setAttribute('aria-label', DOES[i]);
     b.addEventListener('pointerenter', (e) => e.pointerType === 'mouse' && this.#light(i));
     b.addEventListener('pointerleave', (e) => e.pointerType === 'mouse' && this.lit === i && this.#light(-1));
     b.addEventListener('focus', () => b.matches(':focus-visible') && this.#light(i));
     b.addEventListener('blur', () => this.lit === i && !b.matches(':hover') && this.#light(-1));
     b.addEventListener('click', () => {
-      if (this.touch) this.#light(i);
+      if (this.touch && this.lit !== i) return this.#light(i);
       this.group.dispatchEvent(
         new CustomEvent('stone', { bubbles: true, detail: { index: i, name: STONES[i].name } }),
       );
@@ -69,8 +87,21 @@ export class Cairn {
     return b;
   }
 
+  #tag(i) {
+    const { rise, run } = LEAD;
+    const t = document.createElement('span');
+    t.className = 'stone-tag';
+    t.setAttribute('aria-hidden', 'true');
+    t.innerHTML =
+      `<svg width="1" height="1"><path pathLength="1" d="M0 0L${-rise} ${-rise}H${-rise - run}"/><circle r="2.5"/></svg>` +
+      `<span class="stone-tag__words">${DOES[i]}</span>`;
+    this.group.append(t);
+    return t;
+  }
+
   #light(i) {
     this.lit = this.here ? i : -1;
+    this.stones.forEach((st, j) => st.tag.classList.toggle('is-lit', j === this.lit));
   }
 
   enter() {
@@ -83,7 +114,7 @@ export class Cairn {
 
   leave() {
     this.here = false;
-    this.lit = -1;
+    this.#light(-1);
     this.group.inert = true;
     this.group.classList.remove('is-here');
   }
@@ -103,9 +134,25 @@ export class Cairn {
       b.width = `${(w * s).toFixed(2)}px`;
       b.height = `${(h * s).toFixed(2)}px`;
       b.clipPath = `path('${path(st.points, x, y, s)}')`;
+      this.#place(st, vw, s);
       this.#sprite(st, i, sd);
     });
     this.dirty = true;
+  }
+
+  #place(st, vw, s) {
+    const { cover } = this;
+    const scanned = !LANDS[st.name];
+    const words = st.tag.lastElementChild.offsetWidth;
+    const flankX = cover.x + st.lands[0] * s + (scanned ? LEAD.inset : 0);
+    const over = flankX - REACH - words < LEAD.edge;
+    const midX = cover.x + (st.box.x + st.box.w / 2) * s;
+    const [x, y] = over
+      ? [Math.max(LEAD.edge + words / 2, Math.min(vw - LEAD.edge - words / 2, midX)), cover.y + (st.box.y + st.box.h / 2) * s]
+      : [flankX, cover.y + st.lands[1] * s];
+    st.tag.classList.toggle('stone-tag--over', over);
+    st.tag.style.left = `${Math.round(x)}px`;
+    st.tag.style.top = `${Math.round(y)}px`;
   }
 
   paint(dt) {

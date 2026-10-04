@@ -88,7 +88,7 @@ body {
 
 #word {
   position: absolute;
-  left: 50%;
+  left: 0;
   top: 0;
   display: block;
   pointer-events: none;
@@ -126,6 +126,192 @@ body {
 /* the stone lights up in yellow on focus: that is the focus ring */
 .stone:focus-visible {
   outline: none;
+}
+
+/* what a stone does, said to its left while it is lit: words in the sky's white, and a
+   bent leader that draws out from the stone to meet them */
+.stone-tag {
+  --out: 0.2s;
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--out) var(--ease-out);
+}
+.stone-tag.is-lit {
+  opacity: 1;
+}
+.stone-tag svg {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  filter: drop-shadow(0 1px 1.5px rgb(16 58 64 / 0.55));
+}
+.stone-tag path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.stone-tag circle {
+  fill: currentColor;
+}
+.stone-tag__words {
+  position: absolute;
+  right: var(--reach);
+  top: calc(var(--rise) * -1);
+  translate: var(--slide, 0px) -50%;
+  font-weight: 500;
+  font-size: 1.125rem;
+  line-height: 1;
+  letter-spacing: 0.005em;
+  white-space: nowrap;
+  text-shadow: var(--ink-shadow);
+}
+.stone-tag--over svg {
+  display: none;
+}
+.stone-tag--over .stone-tag__words {
+  right: auto;
+  left: 0;
+  top: 0;
+  translate: -50% -50%;
+}
+/* the leader draws and the words slide in; both reset only once the tag has faded out */
+@media (prefers-reduced-motion: no-preference) {
+  .stone-tag {
+    --slide: 8px;
+  }
+  .stone-tag.is-lit {
+    --slide: 0px;
+  }
+  .stone-tag path {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    transition: stroke-dashoffset 0s var(--out);
+  }
+  .stone-tag.is-lit path {
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 0.45s var(--ease-out);
+  }
+  .stone-tag__words {
+    opacity: 0;
+    transition:
+      opacity 0s var(--out),
+      translate 0s var(--out);
+  }
+  .stone-tag.is-lit .stone-tag__words {
+    opacity: 1;
+    transition:
+      opacity 0.4s 0.15s var(--ease-out),
+      translate 0.6s 0.15s var(--ease-out);
+  }
+}
+
+/* the ko-fi panel, opened by the bottom stone */
+.kofi {
+  width: min(420px, calc(100vw - 24px));
+  max-height: calc(100svh - 24px);
+  padding: 0;
+  border: 0;
+  border-radius: 28px;
+  overflow: hidden;
+  color: var(--ink);
+  background: #f9f9f9;
+  box-shadow:
+    0 2px 6px rgb(0 40 110 / 0.25),
+    0 40px 80px -24px rgb(0 40 110 / 0.7);
+  --drop: 16px;
+  --haze: 6px;
+  opacity: 0;
+  translate: 0 var(--drop);
+  filter: blur(var(--haze));
+  transition:
+    opacity 0.5s var(--ease-out),
+    translate 0.6s var(--ease-out),
+    filter 0.5s var(--ease-out),
+    overlay 0.5s allow-discrete,
+    display 0.5s allow-discrete;
+}
+.kofi[open] {
+  display: flex;
+  flex-direction: column;
+  opacity: 1;
+  translate: 0 0;
+  filter: none;
+}
+@starting-style {
+  .kofi[open] {
+    opacity: 0;
+    translate: 0 var(--drop);
+    filter: blur(var(--haze));
+  }
+}
+.kofi::backdrop {
+  background: rgb(0 52 128 / 0);
+  transition:
+    background 0.5s var(--ease-out),
+    overlay 0.5s allow-discrete,
+    display 0.5s allow-discrete;
+}
+.kofi[open]::backdrop {
+  background: rgb(0 52 128 / 0.5);
+}
+@starting-style {
+  .kofi[open]::backdrop {
+    background: rgb(0 52 128 / 0);
+  }
+}
+.kofi__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 14px 12px 22px;
+  background: var(--cloud);
+}
+.kofi__head h2 {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.125rem;
+  letter-spacing: -0.005em;
+}
+.kofi__close {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--ink);
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  cursor: pointer;
+  transition: background 0.3s var(--ease-out);
+}
+.kofi__close:hover {
+  background: color-mix(in srgb, var(--ink) 16%, transparent);
+}
+.kofi__close svg {
+  width: 18px;
+  height: 18px;
+}
+.kofi iframe {
+  width: 100%;
+  height: 570px;
+  min-height: 0;
+  border: 0;
+}
+.kofi__out {
+  padding: 12px 22px 14px;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  text-align: center;
+  color: var(--ink);
+  text-underline-offset: 3px;
+  background: var(--cloud);
 }
 
 /* a frame of cloud white, top and bottom */
@@ -295,7 +481,9 @@ body {
     0 1px 2px rgb(0 50 140 / 0.2),
     0 6px 16px -8px rgb(0 58 170 / 0.5);
 }
-.pill:focus-visible {
+.pill:focus-visible,
+.kofi__close:focus-visible,
+.kofi__out:focus-visible {
   outline: 3px solid var(--flower);
   outline-offset: 3px;
 }
@@ -303,6 +491,10 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .get .pill {
     animation: none;
+  }
+  .kofi {
+    --drop: 0px;
+    --haze: 0px;
   }
   .signoff {
     filter: none;

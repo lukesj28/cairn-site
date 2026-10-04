@@ -1,5 +1,7 @@
 const TAU = Math.PI * 2;
 const F = 300;
+const OVERSAMPLE = 1.5;
+const MAX_PIXELS = 14e6;
 
 function mulberry32(seed) {
   return function () {
@@ -233,8 +235,10 @@ export class CloudWord {
     const M = F * 1.1;
     this.M = M;
     const unit = cssWidth / this.mask.w;
-    this.cssW = (this.mask.w + M * 2) * unit;
-    this.cssH = (this.mask.h + M * 2) * unit;
+    const pw = Math.round((this.mask.w + M * 2) * unit * dpr);
+    const ph = Math.round((this.mask.h + M * 2) * unit * dpr);
+    this.cssW = pw / dpr;
+    this.cssH = ph / dpr;
     const { h, pad, asc, massY } = this.mask;
     this.baseY = (pad + asc - h / 2) * unit;
     this.massY = (massY - h / 2) * unit;
@@ -246,8 +250,11 @@ export class CloudWord {
     this.xHeight = (this.baseY - this.massTop);
     this.canvas.style.width = `${this.cssW}px`;
     this.canvas.style.height = `${this.cssH}px`;
-    this.canvas.width = Math.round(this.cssW * dpr);
-    this.canvas.height = Math.round(this.cssH * dpr);
+    const over = Math.max(1, Math.min(OVERSAMPLE, Math.sqrt(MAX_PIXELS / (pw * ph))));
+    const cw = Math.round(pw * over), ch = Math.round(ph * over);
+    if (this.canvas.width !== cw) this.canvas.width = cw;
+    if (this.canvas.height !== ch) this.canvas.height = ch;
+    this.ctx.imageSmoothingQuality = 'high';
     this.scale = this.canvas.width / (this.mask.w + M * 2);
   }
 
