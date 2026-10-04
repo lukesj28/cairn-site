@@ -4,7 +4,7 @@ import '@fontsource/fredoka/700.css';
 import './style.css';
 import { CloudWord } from './cloud.js';
 import { Cairn } from './cairn.js';
-import appleLogo from '@phosphor-icons/core/fill/apple-logo-fill.svg?raw';
+import appleLogo from './icons/apple.svg?raw';
 import arrowUp from '@phosphor-icons/core/bold/arrow-up-bold.svg?raw';
 
 for (const [name, svg] of [['apple', appleLogo], ['arrow-up', arrowUp]]) {
@@ -259,7 +259,7 @@ addEventListener('keydown', (e) => {
 
 document.getElementById('back-up').addEventListener('click', async () => {
   await goTo(0);
-  get.querySelector('button')?.focus({ preventScroll: true, focusVisible: false });
+  get.querySelector('a')?.focus({ preventScroll: true, focusVisible: false });
 });
 
 function tiltFrame() {
