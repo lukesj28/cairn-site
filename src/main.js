@@ -3,6 +3,7 @@ import '@fontsource/fredoka/600.css';
 import '@fontsource/fredoka/700.css';
 import './style.css';
 import { CloudWord } from './cloud.js';
+import { Cairn } from './cairn.js';
 import appleLogo from '@phosphor-icons/core/fill/apple-logo-fill.svg?raw';
 import arrowUp from '@phosphor-icons/core/bold/arrow-up-bold.svg?raw';
 
@@ -12,14 +13,16 @@ for (const [name, svg] of [['apple', appleLogo], ['arrow-up', arrowUp]]) {
 
 const FPS = 24;
 const SRC_ASPECT = 1080 / 1920;
-const TILT = 48;
+const TILT = 72;
 const PAN = [
-  0, 0.0041, 0.0112, 0.0206, 0.0326, 0.047, 0.0636, 0.0822, 0.1027, 0.125, 0.1491, 0.175, 0.2024,
-  0.2309, 0.2607, 0.2917, 0.3235, 0.3564, 0.3898, 0.4238, 0.4585, 0.4935, 0.5286, 0.5639, 0.5991,
-  0.6342, 0.6691, 0.7036, 0.7376, 0.771, 0.804, 0.8358, 0.867, 0.8968, 0.9254, 0.9528, 0.9786,
-  1.0028, 1.0251, 1.0456, 1.0642, 1.0808, 1.0953, 1.1072, 1.1166, 1.1238, 1.1279, 1.1295,
+  0, 0.0019, 0.0052, 0.0094, 0.0149, 0.0217, 0.0293, 0.0382, 0.0478, 0.0587, 0.0703, 0.083, 0.0964,
+  0.1109, 0.1259, 0.1419, 0.1585, 0.1758, 0.1939, 0.2125, 0.2316, 0.2515, 0.2718, 0.2924, 0.3135,
+  0.3352, 0.3572, 0.3794, 0.4018, 0.4245, 0.4473, 0.4705, 0.4939, 0.5174, 0.5411, 0.5647, 0.5883,
+  0.6119, 0.6354, 0.6587, 0.6817, 0.7045, 0.7271, 0.7495, 0.7718, 0.7939, 0.8156, 0.8368, 0.8574,
+  0.8777, 0.8976, 0.9167, 0.9352, 0.9534, 0.9706, 0.9872, 1.0032, 1.0182, 1.0327, 1.046, 1.0588,
+  1.0703, 1.0812, 1.0908, 1.0997, 1.1073, 1.1141, 1.1196, 1.1238, 1.1272, 1.129, 1.1295,
 ];
-const LOOP2_REENTRY = 8;
+const LOOP2_REENTRY = 91 / FPS;
 const JOIN_MS = 140;
 const LEAVE_MS = 320;
 const DISSOLVE_MS = 480;
@@ -29,12 +32,18 @@ const reel = document.getElementById('reel');
 const wordCanvas = document.getElementById('word');
 const get = document.getElementById('get');
 const signoff = document.getElementById('signoff');
-
+const root = document.documentElement;
 const sky = document.createElement('canvas');
 const skyCtx = sky.getContext('2d', { alpha: false });
 const decoders = document.createElement('div');
 decoders.className = 'decoders';
 reel.append(sky, decoders);
+
+const SOURCES = [
+  ['av1.mp4', 'video/mp4; codecs="av01.0.09M.10"'],
+  ['hevc.mp4', 'video/mp4; codecs="hvc1.2.4.L123.B0"'],
+  ['mp4', 'video/mp4; codecs="avc1.640032"'],
+]
 
 function clip(name, loop = false) {
   const v = document.createElement('video');
@@ -44,7 +53,7 @@ function clip(name, loop = false) {
   v.loop = loop;
   v.preload = 'auto';
   v.disablePictureInPicture = true;
-  for (const [ext, type] of [['webm', 'video/webm; codecs="vp9"'], ['mp4', 'video/mp4']]) {
+  for (const [ext, type] of SOURCES) {
     const s = document.createElement('source');
     s.src = `${import.meta.env.BASE_URL}hero/${name}.${ext}`;
     s.type = type;
@@ -61,6 +70,11 @@ const t2Fwd = clip('t2-fwd');
 const t2Rev = clip('t2-rev');
 const loop3 = clip('loop3', true);
 const clips = [t1Fwd, t1Rev, loop2, t2Fwd, t2Rev, loop3];
+
+const TILT_FPS = 60;
+const TILT_STEPS = Math.round(((TILT - 1) * TILT_FPS) / FPS);
+
+const cairn = new Cairn(document.getElementById('cairn'), document.getElementById('stones'), { reduceMotion });
 
 const poster = new Image();
 poster.src = `${import.meta.env.BASE_URL}hero/poster.webp`;
@@ -139,6 +153,7 @@ function rewind(v, t = 0) {
 
 let state = 0;
 let moving = null;
+
 async function transition(clipIn, fadeIn, next, nextAt, joinMs) {
   moving = clipIn;
   rewind(clipIn);
@@ -156,6 +171,7 @@ async function step(dir) {
   const to = state + dir;
   if (moving || to < 0 || to > 2) return false;
   signoff.classList.remove('is-here');
+  cairn.leave();
 
   if (reduceMotion.matches) {
     const still = [t1Fwd, loop2, loop3][to];
@@ -175,6 +191,7 @@ async function step(dir) {
 
   state = to;
   signoff.classList.toggle('is-here', state === 2);
+  if (state === 2) cairn.enter();
   get.inert = state !== 0;
   return true;
 }
@@ -246,10 +263,13 @@ document.getElementById('back-up').addEventListener('click', async () => {
 });
 
 function tiltFrame() {
-  if (moving === t1Fwd) return Math.min(TILT - 1, t1Fwd.currentTime * FPS);
-  if (moving === t1Rev) return Math.max(0, TILT - 1 - t1Rev.currentTime * FPS);
+  const at = (v) => Math.min(TILT - 1, (v.currentTime * TILT_FPS * (TILT - 1)) / TILT_STEPS);
+  if (moving === t1Fwd) return at(t1Fwd);
+  if (moving === t1Rev) return TILT - 1 - at(t1Rev);
   return state === 0 ? 0 : TILT - 1;
 }
+const WORD_GONE = 0.4238;
+const GET_GONE = 0.1027;
 function panAt(f) {
   const i = Math.min(TILT - 2, Math.floor(f));
   return PAN[i] + (PAN[i + 1] - PAN[i]) * Math.min(1, f - i);
@@ -281,6 +301,9 @@ function layout() {
   const coverW = coverH / SRC_ASPECT;
   cover = { x: (vw - coverW) / 2, y: (vh - coverH) / 2, w: coverW, h: coverH };
   getH = get.offsetHeight;
+  const bar = Math.round(Math.min(28, Math.max(14, vh * 0.025)) * dpr) / dpr;
+  root.style.setProperty('--bar', `${bar}px`);
+  cairn.layout(vw, vh, cover, dpr);
   if (word) word.resize(Math.min(vw < 700 ? vw * 0.84 : vw * 0.48, 860), dpr);
 }
 addEventListener('resize', layout);
@@ -293,6 +316,7 @@ function tick(now) {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
   paint(now);
+  cairn.paint(dt);
 
   tilt.x += (tilt.tx - tilt.x) * (1 - Math.exp(-dt * 3));
   tilt.y += (tilt.ty - tilt.y) * (1 - Math.exp(-dt * 3));
@@ -300,7 +324,7 @@ function tick(now) {
   if (word) {
     const f = tiltFrame();
     const rise = panAt(f) * coverH;
-    const spread = reduceMotion.matches ? (state === 0 && !moving ? 0 : 1) : Math.min(1, f / 19);
+    const spread = reduceMotion.matches ? (state === 0 && !moving ? 0 : 1) : Math.min(1, panAt(f) / WORD_GONE);
     const visible = spread < 1 && rise < vh * 0.5 + word.cssH * 0.5;
     wordCanvas.style.visibility = visible ? 'visible' : 'hidden';
 
@@ -312,7 +336,7 @@ function tick(now) {
       `translate3d(calc(-50% + ${(-word.inkCx).toFixed(2)}px), ${(centre - word.cssH / 2 - rise).toFixed(2)}px, 0) ` +
       `perspective(1400px) rotateX(${(-tilt.y * 5).toFixed(2)}deg) rotateY(${(tilt.x * 7).toFixed(2)}deg)`;
 
-    const gone = reduceMotion.matches ? spread : Math.min(1, f / 8);
+    const gone = reduceMotion.matches ? spread : Math.min(1, panAt(f) / GET_GONE);
     get.style.transform = `translate3d(-50%, ${(groupTop + inkH + gap - rise - gone * 24).toFixed(2)}px, 0)`;
     get.style.opacity = String(1 - gone);
     get.style.visibility = gone < 1 ? 'visible' : 'hidden';

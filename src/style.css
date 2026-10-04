@@ -96,46 +96,6 @@ body {
   transform-origin: 50% 50%;
 }
 
-/* the fox, sitting on the bottom bar with its paws over the front; placed and sized by src/fox.js */
-#fox {
-  position: absolute;
-  z-index: 1;
-  display: block;
-  pointer-events: none;
-}
-
-/* the meadow fox, floating in the world; placed by src/main.js, sized by src/meadow-fox.js */
-.meadow-fox {
-  position: absolute;
-  left: 0;
-  top: 0;
-  padding: 0;
-  border: 0;
-  border-radius: 40%;
-  background: none;
-  font: inherit;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.5s var(--ease-out);
-  will-change: transform;
-  -webkit-tap-highlight-color: transparent;
-}
-.meadow-fox.is-here {
-  opacity: 1;
-}
-.meadow-fox.is-busy {
-  cursor: default;
-}
-.meadow-fox:focus-visible {
-  outline: 3px solid var(--flower);
-  outline-offset: -12px;
-}
-.meadow-fox canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
 /* the cairn's stones: the highlight is painted into #cairn by src/cairn.js, and each
    stone is a button cut to its outline, stacked front to back */
 #cairn {
@@ -168,7 +128,7 @@ body {
   outline: none;
 }
 
-/* a frame of cloud white, top and bottom; the bottom one is the fox's ledge */
+/* a frame of cloud white, top and bottom */
 .bar {
   position: absolute;
   left: 0;
@@ -199,7 +159,7 @@ body {
   position: absolute;
   left: 50%;
   top: 0;
-  z-index: 2; /* stays above the fox on short screens */
+  z-index: 2;
   will-change: transform, opacity;
 }
 .get .pill {
@@ -335,12 +295,5 @@ body {
   .signoff {
     filter: none;
     transform: none;
-  }
-  #fox {
-    opacity: 0;
-    transition: opacity 0.6s var(--ease-out);
-  }
-  #fox.is-here {
-    opacity: 1;
   }
 }

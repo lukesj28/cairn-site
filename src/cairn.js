@@ -2,9 +2,7 @@ import { STONES } from './cairn-stones.js';
 
 const SRC_W = 1920;
 const LABELS = ['Top stone', 'Second stone', 'Third stone', 'Bottom stone'];
-const SHOW = { color: 0.62, screen: 0.08 };
-const HIDE = { color: 0.3, screen: 0.07 };
-const LINE = 1.75;
+const GLOW = { color: '#ffe3a0', reach: 150, bloom: 1, bloomBlur: 55, rim: 0.28, rimBlur: 40, rimWidth: 44, lift: 0.05, seamBlur: 16 };
 const ON = 0.06;
 const OFF = 0.14;
 
@@ -42,25 +40,8 @@ export class Cairn {
       level: 0,
       button: this.#button(i),
     }));
-    const all = this.stones.map((s) => s.box);
-    const x = Math.min(...all.map((b) => b.x));
-    const y = Math.min(...all.map((b) => b.y));
-    this.area = {
-      x,
-      y,
-      w: Math.max(...all.map((b) => b.x + b.w)) - x,
-      h: Math.max(...all.map((b) => b.y + b.h)) - y,
-    };
-    this.key = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
-    this.key.canvas.width = this.area.w;
-    this.key.canvas.height = this.area.h;
-    this.wash = document.createElement('canvas').getContext('2d');
-    this.wash.canvas.width = this.area.w;
-    this.wash.canvas.height = this.area.h;
-    this.keyed = null;
     this.cover = { x: 0, y: 0, w: 0, h: 0 };
     this.dpr = 1;
-    this.yellow = getComputedStyle(document.documentElement).getPropertyValue('--flower').trim() || '#f4d31f';
     this.touch = false;
 
     group.addEventListener('pointerdown', (e) => (this.touch = e.pointerType !== 'mouse'));
@@ -113,7 +94,8 @@ export class Cairn {
     this.canvas.width = Math.round(vw * dpr);
     this.canvas.height = Math.round(vh * dpr);
     const s = cover.w / SRC_W;
-    for (const st of this.stones) {
+    const sd = s * dpr;
+    this.stones.forEach((st, i) => {
       const { x, y, w, h } = st.box;
       const b = st.button.style;
       b.left = `${(cover.x + x * s).toFixed(2)}px`;
@@ -121,11 +103,12 @@ export class Cairn {
       b.width = `${(w * s).toFixed(2)}px`;
       b.height = `${(h * s).toFixed(2)}px`;
       b.clipPath = `path('${path(st.points, x, y, s)}')`;
-    }
+      this.#sprite(st, i, sd);
+    });
     this.dirty = true;
   }
 
-  paint(v, dt) {
+  paint(dt) {
     let any = false;
     let moved = this.dirty;
     for (let i = 0; i < this.stones.length; i++) {
@@ -138,8 +121,7 @@ export class Cairn {
       if (st.level !== was) moved = true;
       if (st.level > 0) any = true;
     }
-    const fresh = any && this.#keyFrom(v);
-    if (!moved && !fresh) return;
+    if (!moved) return;
     this.dirty = false;
 
     const { ctx, canvas, cover, dpr } = this;
@@ -147,75 +129,69 @@ export class Cairn {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (!any) return;
     const s = (cover.w / SRC_W) * dpr;
+    ctx.globalCompositeOperation = 'screen';
     for (let i = this.stones.length - 1; i >= 0; i--) {
       const st = this.stones[i];
-      if (st.level > 0) this.#paintStone(i, st.level, s);
+      if (st.level <= 0) continue;
+      ctx.globalAlpha = st.level;
+      ctx.drawImage(
+        st.sprite,
+        Math.round(cover.x * dpr + st.box.x * s - st.pad),
+        Math.round(cover.y * dpr + st.box.y * s - st.pad),
+      );
     }
-  }
-
-  #keyFrom(v) {
-    if (!v || v.readyState < 2 || v.seeking) return false;
-    if (this.keyed?.v === v && this.keyed.t === v.currentTime) return false;
-    const k = v.videoWidth / SRC_W;
-    const { x, y, w, h } = this.area;
-    const key = this.key;
-    key.globalCompositeOperation = 'copy';
-    key.drawImage(v, x * k, y * k, w * k, h * k, 0, 0, w, h);
-    const img = key.getImageData(0, 0, w, h);
-    const px = img.data;
-    for (let i = 0; i < px.length; i += 4) {
-      const b = px[i + 2];
-      const on = b > px[i + 1] + 8 && b > px[i] + 8;
-      px[i] = px[i + 1] = px[i + 2] = 255;
-      px[i + 3] = on ? 255 : 0;
-    }
-    key.putImageData(img, 0, 0);
-    this.keyed = { v, t: v.currentTime };
-    return true;
-  }
-
-  #paintStone(i, level, s) {
-    const { ctx, cover, dpr, area, yellow } = this;
-    const st = this.stones[i];
-    const toScreen = () => ctx.setTransform(s, 0, 0, s, cover.x * dpr, cover.y * dpr);
-
-    const wash = this.wash;
-    wash.globalCompositeOperation = 'copy';
-    wash.drawImage(this.key.canvas, 0, 0);
-    wash.globalCompositeOperation = 'source-in';
-    wash.fillStyle = yellow;
-    wash.fillRect(0, 0, area.w, area.h);
-    wash.globalCompositeOperation = 'destination-out';
-    wash.setTransform(1, 0, 0, 1, -area.x, -area.y);
-    for (let j = 0; j < i; j++) wash.fill(this.stones[j].outline);
-    wash.setTransform(1, 0, 0, 1, 0, 0);
-
-    const layer = (draw, { color, screen }) => {
-      ctx.globalCompositeOperation = 'color';
-      ctx.globalAlpha = color * level;
-      draw();
-      ctx.globalCompositeOperation = 'screen';
-      ctx.globalAlpha = screen * level;
-      draw();
-    };
-    toScreen();
-    ctx.save();
-    ctx.clip(st.outline);
-    ctx.fillStyle = yellow;
-    layer(() => ctx.fill(st.outline), HIDE);
-    const top = { color: 1 - (1 - SHOW.color) / (1 - HIDE.color), screen: 1 - (1 - SHOW.screen) / (1 - HIDE.screen) };
-    layer(() => ctx.drawImage(wash.canvas, area.x, area.y), top);
     ctx.globalCompositeOperation = 'source-over';
-
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    const line = new Path2D();
-    line.addPath(st.outline, new DOMMatrix([s, 0, 0, s, cover.x * dpr, cover.y * dpr]));
-    ctx.globalAlpha = level;
-    ctx.lineJoin = 'round';
-    ctx.lineWidth = LINE * 2 * dpr;
-    ctx.strokeStyle = yellow;
-    ctx.stroke(line);
-    ctx.restore();
     ctx.globalAlpha = 1;
+  }
+
+  #sprite(st, i, sd) {
+    const pad = Math.ceil(GLOW.reach * sd);
+    const c = document.createElement('canvas');
+    c.width = Math.ceil(st.box.w * sd) + pad * 2;
+    c.height = Math.ceil(st.box.h * sd) + pad * 2;
+    const g = c.getContext('2d');
+    const away = c.width + 100;
+    const mAway = new DOMMatrix([sd, 0, 0, sd, pad - st.box.x * sd - away, pad - st.box.y * sd]);
+    const mInPlace = new DOMMatrix([sd, 0, 0, sd, pad - st.box.x * sd, pad - st.box.y * sd]);
+    const shape = new Path2D();
+    shape.addPath(st.outline, mAway);
+    const inPlace = new Path2D();
+    inPlace.addPath(st.outline, mInPlace);
+
+    g.shadowColor = g.fillStyle = g.strokeStyle = GLOW.color;
+    g.shadowOffsetX = away;
+    g.lineJoin = 'round';
+
+    g.save();
+    const outside = new Path2D();
+    outside.rect(0, 0, c.width, c.height);
+    outside.addPath(inPlace);
+    g.clip(outside, 'evenodd');
+    g.globalAlpha = GLOW.bloom;
+    g.shadowBlur = GLOW.bloomBlur * sd;
+    g.fill(shape);
+    g.restore();
+
+    g.save();
+    g.clip(inPlace);
+    g.globalAlpha = GLOW.rim;
+    g.shadowBlur = GLOW.rimBlur * sd;
+    g.lineWidth = GLOW.rimWidth * sd;
+    g.stroke(shape);
+    g.shadowColor = 'transparent';
+    g.globalAlpha = GLOW.lift;
+    g.fill(inPlace);
+    g.restore();
+    g.shadowColor = '#000';
+    g.shadowBlur = GLOW.seamBlur * sd;
+    g.globalCompositeOperation = 'destination-out';
+    g.globalAlpha = 1;
+    for (let j = 0; j < i; j++) {
+      const cover = new Path2D();
+      cover.addPath(this.stones[j].outline, mAway);
+      g.fill(cover);
+    }
+    st.sprite = c;
+    st.pad = pad;
   }
 }
