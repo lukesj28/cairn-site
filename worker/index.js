@@ -5,6 +5,7 @@ const MAX_TOKENS = 256
 const EMBED = '@cf/baai/bge-small-en-v1.5'
 const RELEVANT = 0.65
 const FAQ_MATCH = 0.85
+const MIN_MSG_RELEVANT = 0.40
 
 const texts = [...FAQ.flatMap((f) => f.q), ...TOPIC]
 const faqIndex = [...FAQ.flatMap((f, i) => f.q.map(() => i)), ...TOPIC.map(() => -1)]
@@ -27,6 +28,7 @@ const SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'",
 }
 
 const json = (data, init = {}) =>
@@ -48,15 +50,31 @@ function isAllowedOrigin(request) {
   if (secFetchSite && secFetchSite !== 'same-origin' && secFetchSite !== 'none') {
     return false
   }
+  const url = new URL(request.url)
   const origin = request.headers.get('origin')
-  if (origin) {
-    const url = new URL(request.url)
-    if (origin !== url.origin) return false
+  if (origin && origin !== url.origin) {
+    return false
+  }
+  const referer = request.headers.get('referer')
+  if (referer) {
+    try {
+      if (new URL(referer).origin !== url.origin) return false
+    } catch {
+      return false
+    }
+  }
+  if (!secFetchSite && !origin && !referer) {
+    return false
   }
   return true
 }
 
 async function chat(request, env) {
+  const contentLength = Number(request.headers.get('content-length') || 0)
+  if (contentLength > 16384) {
+    return text('payload too large', 413)
+  }
+
   const body = await request.json().catch(() => null)
   const message = typeof body?.message === 'string' ? body.message.trim() : ''
   if (!message || message.length > 500) {
@@ -94,22 +112,32 @@ async function chat(request, env) {
     })
     const recentContext = history.slice(-2).map((h) => h.content).join('\n')
     const queryText = recentContext ? `${recentContext}\n${message}` : message
-    const [vecs, q] = await Promise.all([refs, embed(env, queryText)])
+    const inputs = history.length ? [message, queryText] : [message]
+    const [vecs, embeddings] = await Promise.all([refs, embed(env, inputs)])
+    const msgVec = embeddings[0]
+    const queryVec = history.length ? embeddings[1] : msgVec
 
-    let bestScore = -1
+    let bestMsgScore = -1
+    let bestQueryScore = -1
     let bestFaqScore = -1
     let bestFaqIndex = -1
 
     for (let i = 0; i < vecs.length; i++) {
-      const score = cos(q[0], vecs[i])
-      if (score > bestScore) bestScore = score
-      if (faqIndex[i] >= 0 && score > bestFaqScore) {
-        bestFaqScore = score
+      const msgScore = cos(msgVec, vecs[i])
+      if (msgScore > bestMsgScore) bestMsgScore = msgScore
+
+      const queryScore = history.length ? cos(queryVec, vecs[i]) : msgScore
+      if (queryScore > bestQueryScore) bestQueryScore = queryScore
+
+      if (faqIndex[i] >= 0 && queryScore > bestFaqScore) {
+        bestFaqScore = queryScore
         bestFaqIndex = faqIndex[i]
       }
     }
 
-    if (bestScore < RELEVANT) return json({ source: 'refusal', reply: 'I can only help with questions about cairn.' })
+    if (bestQueryScore < RELEVANT || (history.length && bestMsgScore < MIN_MSG_RELEVANT)) {
+      return json({ source: 'refusal', reply: 'I can only help with questions about cairn.' })
+    }
     if (!history.length && bestFaqScore >= FAQ_MATCH) return json({ source: 'faq', reply: FAQ[bestFaqIndex].a })
 
     if (!(await env.LLM_LIMIT.limit({ key: ip })).success) return limited()

@@ -4,6 +4,7 @@ import '@fontsource/fredoka/700.css';
 import './style.css';
 import { CloudWord } from './cloud.js';
 import { Cairn } from './cairn.js';
+import { Buddy } from './buddy.js';
 import appleLogo from './icons/apple.svg?raw';
 import arrowUp from '@phosphor-icons/core/bold/arrow-up-bold.svg?raw';
 import cross from '@phosphor-icons/core/bold/x-bold.svg?raw';
@@ -78,6 +79,8 @@ const TILT_STEPS = Math.round(((TILT - 1) * TILT_FPS) / FPS);
 
 const stones = document.getElementById('stones');
 const cairn = new Cairn(document.getElementById('cairn'), stones, { reduceMotion });
+
+const buddy = new Buddy(document.getElementById('buddy'), { reduceMotion, step });
 
 const kofi = document.getElementById('kofi');
 stones.addEventListener('stone', (e) => {
@@ -185,6 +188,9 @@ async function step(dir) {
   if (moving || to < 0 || to > 2) return false;
   signoff.classList.remove('is-here');
   cairn.leave();
+  const clip = dir > 0 ? (state === 0 ? t1Fwd : t2Fwd) : (state === 1 ? t1Rev : t2Rev);
+  const glide = clip?.duration;
+  buddy.leave(state, to, reduceMotion.matches || !Number.isFinite(glide) ? 600 : glide * 1000);
 
   if (reduceMotion.matches) {
     const still = [t1Fwd, loop2, loop3][to];
@@ -206,6 +212,7 @@ async function step(dir) {
   signoff.classList.toggle('is-here', state === 2);
   if (state === 2) cairn.enter();
   get.inert = state !== 0;
+  buddy.arrive(state);
   return true;
 }
 
@@ -220,6 +227,8 @@ addEventListener(
   'wheel',
   (e) => {
     if (e.ctrlKey || kofi.open) return;
+    const says = e.target instanceof Element && e.target.closest('.buddy__say');
+    if (says && says.scrollHeight > says.clientHeight) return;
     e.preventDefault();
     clearTimeout(wheelQuiet);
     wheelQuiet = setTimeout(() => {
@@ -247,7 +256,7 @@ addEventListener(
 addEventListener(
   'touchmove',
   (e) => {
-    if (touchY == null || kofi.open) return;
+    if (touchY == null || kofi.open || e.target.closest?.('.buddy__bubble')) return;
     const dy = touchY - e.touches[0].clientY;
     if (Math.abs(dy) < 24) return;
     touchY = null;
@@ -258,6 +267,7 @@ addEventListener(
 
 addEventListener('keydown', (e) => {
   if (e.altKey || e.metaKey || e.ctrlKey || kofi.open) return;
+  if (e.target instanceof Element && e.target.closest('input, textarea')) return;
   const onControl = e.target instanceof Element && e.target.closest('button, a, input, textarea');
   const k = e.key;
   let dir = 0;
@@ -318,6 +328,7 @@ function layout() {
   const bar = snap(Math.min(28, Math.max(14, vh * 0.025)));
   root.style.setProperty('--bar', `${bar}px`);
   cairn.layout(vw, vh, cover, dpr);
+  buddy.layout(vw, vh, cover, bar);
   if (word) word.resize(Math.min(vw < 700 ? vw * 0.84 : vw * 0.48, 860), dpr);
 }
 addEventListener('resize', layout);
@@ -381,5 +392,6 @@ async function boot() {
   lastWordKey = '';
   layout();
   revealStart = performance.now();
+  buddy.arrive(0);
 }
 boot();
