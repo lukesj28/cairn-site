@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#ffffff" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23006ce5'/%3E%3Cg fill='%23fff'%3E%3Ccircle cx='12' cy='18' r='6'/%3E%3Ccircle cx='19' cy='15' r='7'/%3E%3Ccircle cx='24' cy='19' r='4.5'/%3E%3Crect x='8' y='18' width='19' height='5.5' rx='2.75'/%3E%3C/g%3E%3C/svg%3E" />
     <title>cairn</title>
-    <link rel="preload" as="image" href="/hero/poster.webp" />
+    <link rel="preload" as="image" href="https://cdn.cairnstacks.app/hero/poster.webp" />
   </head>
   <body>
     <main class="journey">
@@ -45,8 +45,13 @@
         <h2 id="kofi-title">buy me a coffee</h2>
         <button type="button" class="kofi__close" aria-label="Close" data-icon="x"></button>
       </header>
-      <iframe title="Support lukesj28 on Ko-fi" data-src="https://ko-fi.com/lukesj28/?hidefeed=true&widget=true&embed=true&preview=true"></iframe>
-      <a class="kofi__out" href="https://ko-fi.com/lukesj28" target="_blank" rel="noopener">open on ko-fi instead</a>
+      <iframe
+        title="Support lukesj28 on Ko-fi"
+        loading="lazy"
+        sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+        data-src="https://ko-fi.com/lukesj28/?hidefeed=true&widget=true&embed=true&preview=true"
+      ></iframe>
+      <a class="kofi__out" href="https://ko-fi.com/lukesj28" target="_blank" rel="noopener noreferrer">open on ko-fi instead</a>
     </dialog>
     <script type="module" src="/src/main.js"></script>
   </body>

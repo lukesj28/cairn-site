@@ -40,11 +40,12 @@ const decoders = document.createElement('div');
 decoders.className = 'decoders';
 reel.append(sky, decoders);
 
+const HERO_BASE = 'https://cdn.cairnstacks.app/hero';
 const SOURCES = [
   ['av1.mp4', 'video/mp4; codecs="av01.0.09M.10"'],
   ['hevc.mp4', 'video/mp4; codecs="hvc1.2.4.L123.B0"'],
   ['mp4', 'video/mp4; codecs="avc1.640032"'],
-]
+];
 
 function clip(name, loop = false) {
   const v = document.createElement('video');
@@ -56,7 +57,7 @@ function clip(name, loop = false) {
   v.disablePictureInPicture = true;
   for (const [ext, type] of SOURCES) {
     const s = document.createElement('source');
-    s.src = `${import.meta.env.BASE_URL}hero/${name}.${ext}`;
+    s.src = `${HERO_BASE}/${name}.${ext}`;
     s.type = type;
     v.append(s);
   }
@@ -89,7 +90,7 @@ kofi.querySelector('.kofi__close').addEventListener('click', () => kofi.close())
 kofi.addEventListener('click', (e) => e.target === kofi && kofi.close());
 
 const poster = new Image();
-poster.src = `${import.meta.env.BASE_URL}hero/poster.webp`;
+poster.src = `${HERO_BASE}/poster.webp`;
 poster.decode?.().then(() => document.documentElement.classList.add('ready'), () => {});
 t1Fwd.addEventListener('loadeddata', () => document.documentElement.classList.add('ready'), { once: true });
 
