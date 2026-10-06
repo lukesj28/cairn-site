@@ -405,6 +405,7 @@ body {
 .buddy__say {
   flex: 0 1 auto;
   min-height: 1.4em;
+  white-space: pre-line;
   margin: 0 2px;
   overflow-y: auto;
   overscroll-behavior: contain;

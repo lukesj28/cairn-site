@@ -1,4 +1,4 @@
-import { FAQ, TOPIC, CONTEXT } from './faq.js'
+import { FAQ, TOPIC, CONTEXT, DOC_CHUNKS } from './faq.js'
 
 const MODEL = '@cf/zai-org/glm-4.7-flash'
 const MAX_TOKENS = 256
@@ -6,10 +6,12 @@ const EMBED = '@cf/baai/bge-small-en-v1.5'
 const RELEVANT = 0.65
 const FAQ_MATCH = 0.85
 const MIN_MSG_RELEVANT = 0.40
+const DOC_TOP_K = 3
 
 const texts = [...FAQ.flatMap((f) => f.q), ...TOPIC]
 const faqIndex = [...FAQ.flatMap((f, i) => f.q.map(() => i)), ...TOPIC.map(() => -1)]
 let refs
+let docRefs
 const embed = async (env, text) => (await env.AI.run(EMBED, { text, pooling: 'cls' })).data
 
 const cos = (a, b) => {
@@ -43,7 +45,11 @@ const text = (msg, status = 200) =>
     headers: { ...SECURITY_HEADERS, 'Content-Type': 'text/plain; charset=utf-8' },
   })
 
-const limited = () => json({ error: 'rate_limited' }, { status: 429 })
+const limited = () =>
+  json(
+    { error: 'rate_limited' },
+    { status: 429, headers: { 'Retry-After': '60' } },
+  )
 
 function isAllowedOrigin(request) {
   const secFetchSite = request.headers.get('sec-fetch-site')
@@ -70,9 +76,13 @@ function isAllowedOrigin(request) {
 }
 
 async function chat(request, env) {
-  const contentLength = Number(request.headers.get('content-length') || 0)
-  if (contentLength > 16384) {
-    return text('payload too large', 413)
+  const ip = request.headers.get('cf-connecting-ip') ?? 'anon'
+  if (!(await env.CHAT_LIMIT.limit({ key: ip })).success) return limited()
+
+  const clHeader = request.headers.get('content-length')
+  const contentLength = Number(clHeader)
+  if (!clHeader || Number.isNaN(contentLength) || contentLength > 16384) {
+    return text('payload too large or missing content-length', 413)
   }
 
   const body = await request.json().catch(() => null)
@@ -102,9 +112,6 @@ async function chat(request, env) {
     }
   }
 
-  const ip = request.headers.get('cf-connecting-ip') ?? 'anon'
-  if (!(await env.CHAT_LIMIT.limit({ key: ip })).success) return limited()
-
   try {
     refs ??= embed(env, texts).catch((err) => {
       refs = null
@@ -129,23 +136,34 @@ async function chat(request, env) {
       const queryScore = history.length ? cos(queryVec, vecs[i]) : msgScore
       if (queryScore > bestQueryScore) bestQueryScore = queryScore
 
-      if (faqIndex[i] >= 0 && queryScore > bestFaqScore) {
-        bestFaqScore = queryScore
+      if (faqIndex[i] >= 0 && msgScore > bestFaqScore) {
+        bestFaqScore = msgScore
         bestFaqIndex = faqIndex[i]
       }
     }
 
+    if (bestFaqScore >= FAQ_MATCH) return json({ source: 'faq', reply: FAQ[bestFaqIndex].a })
     if (bestQueryScore < RELEVANT || (history.length && bestMsgScore < MIN_MSG_RELEVANT)) {
       return json({ source: 'refusal', reply: 'I can only help with questions about cairn.' })
     }
-    if (!history.length && bestFaqScore >= FAQ_MATCH) return json({ source: 'faq', reply: FAQ[bestFaqIndex].a })
 
     if (!(await env.LLM_LIMIT.limit({ key: ip })).success) return limited()
+    docRefs ??= embed(env, DOC_CHUNKS).catch((err) => {
+      docRefs = null
+      throw err
+    })
+    const excerpts = (await docRefs)
+      .map((v, i) => [cos(queryVec, v), i])
+      .sort((a, b) => b[0] - a[0])
+      .slice(0, DOC_TOP_K)
+      .sort((a, b) => a[1] - b[1])
+      .map(([, i]) => DOC_CHUNKS[i])
+      .join('\n\n')
     const out = await env.AI.run(MODEL, {
       messages: [
         {
           role: 'system',
-          content: CONTEXT + ' Answer briefly and directly, using conversation history to resolve follow-up questions. Only answer about cairn; if unsure, point to the README.',
+          content: `${CONTEXT} Answer briefly and directly, using conversation history to resolve follow-up questions. Only answer about cairn. Reply in plain text only: no markdown, no asterisks, no bold. For steps, put each on its own line as "1. ...". Use only button and menu names that appear in the excerpts; never invent UI labels.\n\nDocumentation excerpts:\n${excerpts}`,
         },
         ...history,
         { role: 'user', content: message },

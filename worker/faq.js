@@ -1,3 +1,7 @@
+import DOCS from './helper-docs.md?raw'
+
+export const DOC_CHUNKS = DOCS.split(/^(?=#{2,3} )/m).map((s) => s.trim()).filter((s) => s.startsWith('#'))
+
 export const FAQ = [
   {
     q: ['What is cairn?', 'What does cairn do?', 'Tell me about cairn'],
@@ -31,6 +35,10 @@ export const FAQ = [
     q: ['Is there a Windows version of cairn?', 'Does cairn work on Linux?', 'Is cairn available for Windows or Linux?'],
     a: 'No. Cairn is Mac only.',
   },
+  {
+    q: ['Who made cairn?', 'Who created cairn?', 'Who is the author of cairn?', 'Who built this?'],
+    a: 'Cairn was created by lukesj28: https://github.com/lukesj28',
+  },
 ]
 
 export const TOPIC = [
@@ -40,10 +48,12 @@ export const TOPIC = [
   'menu bar app for window management',
   'launching apps into place',
   'capturing my current window layout',
-  'who made cairn',
+  'who is the developer of cairn',
 ]
 
 export const CONTEXT =
   'You are the helper on the cairn website. Cairn saves a window arrangement as a named stack, stored as fractions of the screen rather than pixels, so a layout saved on one monitor still makes sense on another. Applying a stack launches whatever is not running, waits for the windows, and tiles everything into place. ' +
   'You can capture the current window layout into a stack, or build one by adding apps manually. Arrange windows on a visual canvas with a 12x8 snap grid; hold Shift to place freely. Apply a stack from the menu bar. A stack can span a main and a secondary display. Requires macOS 12+. Mac only. Free and open source under the MIT license. ' +
-  'Install is drag-to-Applications from https://github.com/lukesj28/cairn/releases/latest/download/Cairn.dmg; first launch asks for Accessibility permission; updates are automatic via Sparkle.'
+  'Install is drag-to-Applications from https://github.com/lukesj28/cairn/releases/latest/download/Cairn.dmg; first launch asks for Accessibility permission; updates are automatic via Sparkle. ' +
+  'Cairn was created by lukesj28 (https://github.com/lukesj28). If asked who made, created, or built cairn, answer only "lukesj28"; never give any other name. ' +
+  'Answer from the "Documentation excerpts" provided with each question; if they do not cover it, say you are not sure and point to the docs page or the README.'
