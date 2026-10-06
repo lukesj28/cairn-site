@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#fbfcff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0c1524" media="(prefers-color-scheme: dark)" />
+    <meta
+      name="description"
+      content="How to install and use Cairn, the macOS menu bar app that saves your window layouts as stacks and puts them back with one click."
+    />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23006ce5'/%3E%3Cg fill='%23fff'%3E%3Ccircle cx='12' cy='18' r='6'/%3E%3Ccircle cx='19' cy='15' r='7'/%3E%3Ccircle cx='24' cy='19' r='4.5'/%3E%3Crect x='8' y='18' width='19' height='5.5' rx='2.75'/%3E%3C/g%3E%3C/svg%3E" />
+    <title>cairn docs</title>
+    <script type="module" src="/src/docs.js"></script>
+  </head>
+  <body>
+    <!-- the four stones, traced from the same outlines the landing page uses (src/cairn-stones.js) -->
+    <svg class="defs" aria-hidden="true" focusable="false">
+      <defs>
+        <path id="stone-bottom" d="M386 548L387 540L386 531L378 496L374 486L369 472L364 463L360 456L353 447L345 439L307 407L299 402L292 398L286 396L279 394L269 394L257 395L231 399L216 403L193 411L170 421L160 425L101 445L89 451L65 466L34 480L15 490L10 493L8 495L6 498L5 500L5 504L6 507L8 511L11 515L19 523L28 528L58 543L70 549L80 556L108 574L120 580L131 585L153 592L163 594L173 596L207 599L241 599L294 595L329 591L342 588L353 586L360 583L367 579L373 575L378 569L382 562L385 556Z" />
+        <path id="stone-third" d="M386 250L378 239L367 229L358 222L345 215L329 209L303 201L288 198L268 195L260 195L244 196L218 197L189 203L164 206L138 212L129 215L121 218L102 228L91 235L79 244L68 254L58 265L49 278L41 291L33 305L29 316L28 325L28 336L29 352L31 368L35 384L42 413L46 424L51 435L55 442L61 449L74 461L82 467L102 479L108 482L120 486L128 487L135 487L146 487L179 479L189 477L206 471L220 465L245 450L263 441L270 437L277 432L319 395L342 378L350 372L372 351L378 343L384 336L390 325L394 314L396 302L397 285L397 276L395 268L392 259Z" />
+        <path id="stone-second" d="M297 88L287 71L280 62L276 58L272 56L267 54L262 52L256 51L247 51L237 51L228 52L220 54L212 56L194 63L167 77L139 91L132 95L126 99L118 106L108 116L101 124L97 130L93 136L91 141L90 147L90 155L91 167L92 175L94 182L99 189L106 195L123 207L128 209L132 211L151 212L175 217L190 217L201 217L212 215L223 212L231 208L259 192L266 187L279 175L287 166L294 159L299 151L302 144L304 137L305 127L306 117L305 110L304 103L301 96Z" />
+        <path id="stone-top" d="M299 32L298 29L295 25L291 21L286 19L275 14L253 8L238 6L221 5L205 6L191 9L179 13L168 18L150 30L137 41L126 52L119 63L117 68L115 71L115 75L115 79L118 84L119 86L122 88L127 90L134 90L170 87L199 81L243 72L255 69L271 62L281 58L288 53L294 49L298 43L300 37Z" />
+      </defs>
+    </svg>
+
+    <a class="skip" href="#content">Skip to content</a>
+
+    <header class="top">
+      <div class="top__in">
+        <a class="brand" href="/" aria-label="cairn, back to the home page">
+          <svg class="brand__mark" viewBox="0 0 403 604" aria-hidden="true">
+            <use href="#stone-bottom" />
+            <use href="#stone-third" />
+            <use href="#stone-second" />
+            <use href="#stone-top" />
+          </svg>
+          <span class="brand__word">cairn</span>
+          <span class="brand__docs">docs</span>
+        </a>
+        <nav class="top__links" aria-label="Project">
+          <a class="quiet" href="https://github.com/lukesj28/cairn" aria-label="Source on GitHub">
+            <span class="icon" data-icon="github" aria-hidden="true"></span>
+            <span class="wide">Source</span>
+          </a>
+          <a class="button" href="https://github.com/lukesj28/cairn/releases/latest/download/Cairn.dmg">
+            <span class="icon icon--apple" data-icon="apple" aria-hidden="true"></span>
+            <span>Download<span class="wide"> for Mac</span></span>
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="shell">
+      <nav class="rail" aria-label="On this page">
+        <button type="button" class="rail__toggle" aria-expanded="false" aria-controls="rail-list">
+          <span class="rail__label">On this page</span>
+          <span class="rail__now">Overview</span>
+          <span class="icon" data-icon="caret-down" aria-hidden="true"></span>
+        </button>
+        <div id="rail-list" class="rail__list">
+          <section>
+            <h2>Get started</h2>
+            <ul>
+              <li><a href="#overview">Overview</a></li>
+              <li><a href="#requirements">Requirements</a></li>
+              <li><a href="#installing">Installing</a></li>
+              <li><a href="#quick-start">Quick Start</a></li>
+            </ul>
+          </section>
+          <section>
+            <h2>Using Cairn</h2>
+            <ul>
+              <li><a href="#core-concepts">Core Concepts</a></li>
+              <li>
+                <a href="#features">Features</a>
+                <ul>
+                  <li><a href="#the-menu-bar">The menu bar</a></li>
+                  <li><a href="#the-cairn-window">The Cairn window</a></li>
+                  <li><a href="#creating-a-stack">Creating a stack</a></li>
+                  <li><a href="#editing-a-stack">Editing a stack</a></li>
+                  <li><a href="#applying-a-stack">Applying a stack</a></li>
+                  <li><a href="#re-capturing-a-layout">Re-capturing a layout</a></li>
+                  <li><a href="#settings">Settings</a></li>
+                </ul>
+              </li>
+              <li><a href="#keyboard-shortcuts">Keyboard Shortcuts</a></li>
+            </ul>
+          </section>
+          <section>
+            <h2>Under the hood</h2>
+            <ul>
+              <li><a href="#how-it-works">How It Works</a></li>
+              <li><a href="#privacy-permissions">Privacy &amp; Permissions</a></li>
+              <li><a href="#your-data">Your Data</a></li>
+            </ul>
+          </section>
+          <section>
+            <h2>Help</h2>
+            <ul>
+              <li><a href="#uninstalling">Uninstalling</a></li>
+              <li><a href="#limitations">Limitations</a></li>
+              <li><a href="#faq">FAQ</a></li>
+              <li><a href="#troubleshooting">Troubleshooting</a></li>
+              <li><a href="#support">Support</a></li>
+            </ul>
+          </section>
+          <section>
+            <h2>The website</h2>
+            <ul>
+              <li><a href="#about-this-site">About This Site</a></li>
+            </ul>
+          </section>
+        </div>
+      </nav>
+
+      <main id="content" class="page">
+        <article class="doc">
+          <h1>Cairn Documentation</h1>
+
+          <section aria-labelledby="overview">
+            <h2 id="overview">Overview</h2>
+            <p>
+              Cairn is a macOS menu bar app that remembers how you like your windows arranged and puts them back
+              that way with one click. If you switch between different work contexts, say coding in the morning and
+              writing in the afternoon, you probably open roughly the same apps in roughly the same spots each time.
+              Cairn saves that arrangement as a <strong>stack</strong> and restores it from the menu bar, so you’re
+              not dragging six windows back into place by hand every time you switch.
+            </p>
+          </section>
+
+          <section aria-labelledby="requirements">
+            <h2 id="requirements">Requirements</h2>
+            <ul>
+              <li>macOS 12 (Monterey) or later</li>
+              <li>Apple Silicon and Intel Macs both work</li>
+              <li>
+                Accessibility permission, requested on first launch (see
+                <a href="#privacy-permissions">Privacy &amp; Permissions</a>)
+              </li>
+            </ul>
+            <p>Cairn is Mac only. There’s no Windows or Linux build.</p>
+          </section>
+
+          <section aria-labelledby="installing">
+            <h2 id="installing">Installing</h2>
+            <ol class="steps">
+              <li>
+                Go to <a href="/">cairnstacks.app</a> and click <strong>Download for Mac</strong>. The same build is
+                also on <a href="https://github.com/lukesj28/cairn/releases">GitHub Releases</a> if you’d rather get
+                it there.
+              </li>
+              <li>Open the downloaded <code>Cairn.dmg</code> and drag Cairn into <strong>Applications</strong>.</li>
+              <li>Launch Cairn. It lives in your menu bar; there’s no dock icon.</li>
+              <li>Grant Accessibility access when prompted. Cairn can’t capture or apply layouts without it.</li>
+            </ol>
+            <p>
+              Once it’s installed, Cairn checks for and installs updates on its own through Sparkle, unless you turn
+              that off in Settings (see <a href="#settings">Features</a> below). When an update is ready to install,
+              the menu bar item swaps <strong>Check for Updates</strong> for <strong>Restart to Update</strong>.
+            </p>
+          </section>
+
+          <section aria-labelledby="quick-start">
+            <h2 id="quick-start">Quick Start</h2>
+            <ol class="steps">
+              <li>Open the apps you want in a layout and arrange them roughly how you like them.</li>
+              <li>Click the Cairn menu bar icon, then <strong>Snapshot to New Stack</strong>.</li>
+              <li>
+                Your layout saves as a new stack and the Cairn window opens with it ready to edit. Give it a name if
+                you want.
+              </li>
+              <li>
+                Next time, click the Cairn icon and pick that stack from the list to put every window back exactly
+                where it was.
+              </li>
+            </ol>
+          </section>
+
+          <section aria-labelledby="core-concepts">
+            <h2 id="core-concepts">Core Concepts</h2>
+            <dl class="terms">
+              <dt>Stack</dt>
+              <dd>A named layout: which apps, where their windows sit, and how many displays the layout uses.</dd>
+              <dt>Fractional coordinates</dt>
+              <dd>
+                A window’s position and size are stored as fractions of the screen, from 0 to 1 on each axis, instead
+                of fixed pixels. A window at <code>x: 0.5, width: 0.5</code> always means “the right half of the
+                screen,” whether that screen is a 13" laptop or a 32" external display. It’s the reason a stack built
+                on one monitor still looks right on a completely different one.
+              </dd>
+              <dt>Screens</dt>
+              <dd>
+                A stack targets one or two displays. Each window in a two-display stack is pinned to a specific
+                display, and the editor shows both as separate canvases side by side.
+              </dd>
+            </dl>
+          </section>
+
+          <section aria-labelledby="features">
+            <h2 id="features">Features</h2>
+
+            <h3 id="the-menu-bar">The menu bar</h3>
+            <p>
+              Click the Cairn icon and you’ll see <strong>Open Cairn</strong>, every saved stack listed by name below
+              it, <strong>Snapshot to New Stack</strong>, <strong>Settings</strong>, update controls, and Quit.
+              Picking a stack from the list applies it immediately. There’s no number-key shortcut for individual
+              stacks anymore; you just click the one you want.
+            </p>
+
+            <h3 id="the-cairn-window">The Cairn window</h3>
+            <p>
+              Choosing <strong>Open Cairn</strong> (or clicking a stack to apply it) brings up Cairn’s main window: a
+              sidebar listing every stack on the left, and an editor for whichever one is selected on the right. This
+              is where you build and arrange stacks.
+            </p>
+
+            <h3 id="creating-a-stack">Creating a stack</h3>
+            <ul>
+              <li>
+                <strong>Snapshot</strong> your current windows into a new stack. Cairn scans every standard window of
+                every running app, figures out which screen each one mostly sits on, and records its position as a
+                fraction of that screen.
+              </li>
+              <li>
+                <strong>Start blank</strong> instead, using the plus button in the sidebar, then add apps by hand
+                from a file picker. New apps land in a loose cascade near the center of the canvas so they don’t all
+                pile on top of each other.
+              </li>
+            </ul>
+
+            <h3 id="editing-a-stack">Editing a stack</h3>
+            <p>
+              Select a stack in the sidebar to open it in the editor. Each window in the stack appears as a tile
+              carrying its real app icon and name, on a canvas for each display the stack uses.
+            </p>
+            <ul>
+              <li><strong>Move</strong> a tile by dragging it.</li>
+              <li><strong>Resize</strong> by dragging any edge or corner.</li>
+              <li>
+                <strong>Snap.</strong> Each canvas runs on a 12×8 grid. Dragging a tile snaps its edges to grid lines
+                and to neighboring tiles, so two windows can line up flush without you eyeballing it. Hold
+                <kbd>Shift</kbd> if you want to place something freely for one move.
+              </li>
+              <li>
+                <strong>Quick presets</strong> in the inspector panel: left half, right half, top half, bottom half,
+                full screen, centered.
+              </li>
+              <li>
+                <strong>Exact geometry</strong> fields (X, Y, width, height, all as percentages) when you want
+                something precise.
+              </li>
+              <li><strong>Remove a window</strong> with the trash icon, or select it and press <kbd>Delete</kbd>.</li>
+              <li>
+                <strong>Switch display count.</strong> Moving a stack from one display to two adds a second canvas.
+                Moving back to one drops anything you’d placed on the second display.
+              </li>
+              <li><strong>Rename</strong> a stack by editing its name at the top of the editor.</li>
+              <li><strong>Duplicate or delete</strong> a stack from its right-click menu in the sidebar.</li>
+            </ul>
+
+            <h3 id="applying-a-stack">Applying a stack</h3>
+            <p>
+              Hit <strong>Apply</strong> in the editor, or pick the stack from the menu bar. Either launches any app
+              in the stack that isn’t already running, waits for its windows to show up, and moves everything into
+              its recorded position. The <a href="#how-it-works">How It Works</a> section below covers the mechanics
+              if you’re curious.
+            </p>
+
+            <h3 id="re-capturing-a-layout">Re-capturing a layout</h3>
+            <p>
+              Rearranged your windows and want the stack to catch up? Open it in the editor and hit
+              <strong>Snapshot</strong> again. This replaces every window in that stack with a fresh scan of what’s
+              currently open, so it’s a clean overwrite, not a merge with what was there before.
+            </p>
+
+            <h3 id="settings">Settings</h3>
+            <p>
+              Open Settings from the menu bar, or press <kbd>⌘</kbd><kbd>,</kbd> while you’re viewing your stacks.
+              It’s split into three sections:
+            </p>
+            <ul>
+              <li>
+                <strong>Shortcut.</strong> Record a custom global keyboard shortcut for Snapshot to New Stack, so you
+                can save your current layout from any app without reaching for the menu bar. Nothing is set by
+                default; you choose your own here.
+              </li>
+              <li>
+                <strong>Updates.</strong> A single toggle for whether Cairn checks for and installs new versions
+                automatically in the background. Switch it off and Cairn won’t check on its own; use
+                <strong>Check for Updates</strong> in the menu bar whenever you want to look for a new version
+                yourself.
+              </li>
+              <li>
+                <strong>Support.</strong> A direct link to support the project financially, if Cairn’s been useful to
+                you.
+              </li>
+            </ul>
+          </section>
+
+          <section aria-labelledby="keyboard-shortcuts">
+            <h2 id="keyboard-shortcuts">Keyboard Shortcuts</h2>
+            <div class="table">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Shortcut</th>
+                    <th scope="col">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><kbd>⌘</kbd><kbd>,</kbd></td>
+                    <td>Open Settings, while viewing your stacks</td>
+                  </tr>
+                  <tr>
+                    <td><kbd>Esc</kbd></td>
+                    <td>Back to your stacks, while in Settings</td>
+                  </tr>
+                  <tr>
+                    <td><em>Your own, set in Settings</em></td>
+                    <td>Snapshot current windows into a new stack, from anywhere</td>
+                  </tr>
+                  <tr>
+                    <td><kbd>Shift</kbd> <span class="aside">held while dragging</span></td>
+                    <td>Skip grid snapping for that move</td>
+                  </tr>
+                  <tr>
+                    <td><kbd>Delete</kbd> <span class="aside">or</span> <kbd>Backspace</kbd></td>
+                    <td>Remove the selected window tile</td>
+                  </tr>
+                  <tr>
+                    <td><kbd>Esc</kbd></td>
+                    <td>Deselect the current window tile, while editing a stack</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              Applying a specific stack doesn’t have a shortcut of its own; you pick it by name from the menu bar.
+            </p>
+          </section>
+
+          <section aria-labelledby="how-it-works">
+            <h2 id="how-it-works">How It Works</h2>
+            <p>
+              macOS’s accessibility API is the only way to move another app’s windows around, and it doesn’t always
+              cooperate. Some apps enforce their own minimum size and push back on a resize request outright. Cairn
+              deals with this by setting a window’s frame, checking what actually happened to it, and adjusting its
+              next request if the app resisted, repeating that loop until the window settles into place.
+            </p>
+            <p>
+              The same process launches apps that aren’t running yet, waits for their windows to actually appear, and
+              opens extra windows for anything that needs more than one in a stack. None of this locks up the
+              interface. Placement runs in the background, so Cairn stays responsive while it talks a stubborn window
+              into the right spot.
+            </p>
+          </section>
+
+          <section aria-labelledby="privacy-permissions">
+            <h2 id="privacy-permissions">Privacy &amp; Permissions</h2>
+            <p>
+              Cairn asks for <strong>Accessibility</strong> access because that’s the only way any macOS app can read
+              or move another app’s windows. It’s the one permission Cairn needs, and it’s used for exactly that:
+              reading window positions when you snapshot a stack, setting them when you apply one.
+            </p>
+            <p>
+              Cairn doesn’t collect analytics, doesn’t send your window layouts or app usage anywhere, and has no
+              network access beyond checking for updates. Everything it knows about your stacks sits in a single file
+              on your Mac (see <a href="#your-data">Your Data</a> below).
+            </p>
+            <p>
+              You can review or revoke Cairn’s Accessibility access any time in
+              <strong>System Settings → Privacy &amp; Security → Accessibility</strong>.
+            </p>
+          </section>
+
+          <section aria-labelledby="your-data">
+            <h2 id="your-data">Your Data</h2>
+            <p>Stacks live in a single JSON file at:</p>
+            <div class="code">
+              <pre><code>~/Library/Application Support/Cairn/stacks.json</code></pre>
+              <button type="button" class="copy" aria-label="Copy path">
+                <span class="icon" data-icon="copy" aria-hidden="true"></span>
+              </button>
+            </div>
+            <p>
+              If that file ever turns up unreadable, say a bad edit, a crash mid-write, or disk corruption, Cairn
+              won’t overwrite or quietly drop it. It renames the broken file next to itself with a
+              <code>.corrupt</code> suffix and starts over with an empty stack list, so whatever was there is still
+              sitting on disk if you need to recover it by hand.
+            </p>
+          </section>
+
+          <section aria-labelledby="uninstalling">
+            <h2 id="uninstalling">Uninstalling</h2>
+            <ol class="steps">
+              <li>Quit Cairn from the menu bar.</li>
+              <li>Drag <code>Cairn.app</code> from Applications to the Trash.</li>
+              <li>
+                Optional: delete its saved stacks and preferences at
+                <code>~/Library/Application Support/Cairn/</code>.
+              </li>
+              <li>
+                Optional: remove Cairn’s entry from
+                <strong>System Settings → Privacy &amp; Security → Accessibility</strong>.
+              </li>
+            </ol>
+          </section>
+
+          <section aria-labelledby="limitations">
+            <h2 id="limitations">Limitations</h2>
+            <ul>
+              <li>
+                <strong>Two displays, not an arbitrary number.</strong> A stack can target one or two screens, which
+                covers the vast majority of real desk setups. Supporting more is a possibility down the line, but
+                hasn’t come up as something people actually need yet.
+              </li>
+              <li>
+                <strong>No progress indicator while applying.</strong> Cairn negotiates window placement in the
+                background without showing you that it’s working. Most layouts settle in well under a second anyway,
+                but it’s a rough edge worth knowing about, not a deliberate design choice.
+              </li>
+              <li>
+                <strong>No shortcut for applying a specific stack.</strong> You can set one for snapshotting a new
+                stack, but applying one of your saved stacks is menu-bar only for now.
+              </li>
+            </ul>
+          </section>
+
+          <section aria-labelledby="faq">
+            <h2 id="faq">FAQ</h2>
+
+            <h3 id="is-cairn-free">Is Cairn free?</h3>
+            <p>
+              Yes. Cairn is free and open source under the MIT license.
+              <a href="https://github.com/lukesj28/cairn">Source on GitHub</a>.
+            </p>
+
+            <h3 id="multiple-monitors">Does Cairn work with multiple monitors?</h3>
+            <p>
+              Yes. A stack can span a main display and a secondary one, and since positions are stored as fractions
+              of the screen, a layout saved on one monitor still makes sense on another.
+            </p>
+
+            <h3 id="windows-or-linux">Is there a Windows or Linux version?</h3>
+            <p>No, Cairn is Mac only.</p>
+
+            <h3 id="new-versions">How do I get new versions?</h3>
+            <p>
+              Updates happen through Sparkle. By default Cairn checks and installs them automatically in the
+              background; you can turn that off in Settings and use <strong>Check for Updates</strong> in the menu
+              bar instead whenever you want.
+            </p>
+          </section>
+
+          <section aria-labelledby="troubleshooting">
+            <h2 id="troubleshooting">Troubleshooting</h2>
+
+            <h3 id="permission-every-time">Cairn asks for Accessibility permission every time I open it.</h3>
+            <p>
+              Check <strong>System Settings → Privacy &amp; Security → Accessibility</strong> and make sure Cairn is
+              listed and switched on. After reinstalling Cairn, macOS sometimes wants the old entry removed before
+              it’ll accept a fresh one.
+            </p>
+
+            <h3 id="window-did-not-move">A window didn’t move, or ended up the wrong size.</h3>
+            <p>
+              Some apps are stubborn about their minimum window size and will resist placement even after several
+              retries. Try resizing the window close to the target by hand first, then re-apply the stack.
+            </p>
+
+            <h3 id="stacks-disappeared">My stacks disappeared.</h3>
+            <p>
+              Look in <code>~/Library/Application Support/Cairn/</code> for a file ending in <code>.corrupt</code>.
+              If it’s there, Cairn found that the real <code>stacks.json</code> was unreadable and kept the old copy
+              under that name instead of just losing it.
+            </p>
+          </section>
+
+          <section aria-labelledby="support">
+            <h2 id="support">Support</h2>
+            <ul>
+              <li>
+                <strong>Bugs and feature requests:</strong>
+                <a href="https://github.com/lukesj28/cairn/issues">open an issue on GitHub</a>
+              </li>
+              <li>
+                <strong>Source code:</strong>
+                <a href="https://github.com/lukesj28/cairn">github.com/lukesj28/cairn</a>
+              </li>
+              <li>
+                <strong>Support the project:</strong> the Support Cairn link in the app’s Settings, or the coffee-cup
+                link on the website
+              </li>
+            </ul>
+          </section>
+        </article>
+
+        <section class="site" aria-labelledby="about-this-site">
+          <h2 id="about-this-site">About This Site</h2>
+          <p>
+            Cairn’s website at <a href="/">cairnstacks.app</a> isn’t a conventional static marketing page. It
+            presents the app through an interactive, scroll-driven experience, with a flying helper character you can
+            actually ask questions.
+          </p>
+
+          <h3 id="the-scroll-journey">The scroll journey</h3>
+          <p>
+            Scrolling, swiping, arrow keys, Page Up/Down, Home/End: any of these move you through three stages, each
+            rendered as a full-bleed looping video.
+          </p>
+          <ol class="steps">
+            <li>
+              <strong>Intro.</strong> The landing stage, with the Cairn wordmark and a “Download for Mac” button
+              front and center.
+            </li>
+            <li><strong>A middle stage</strong>, reached by scrolling further.</li>
+            <li>
+              <strong>The cairn.</strong> The final stage, where an actual stacked cairn renders on canvas. Each
+              stone glows and lifts slightly on hover, and each one is its own clickable link.
+            </li>
+          </ol>
+          <p>
+            The transitions between stages crossfade between real video clips rather than scrubbing a single
+            timeline, so the motion stays smooth no matter how fast or slow you scroll. The whole thing also respects
+            <code>prefers-reduced-motion</code>: if you’ve asked your system for less motion, stage changes happen
+            instantly with no camera movement at all.
+          </p>
+
+          <h3 id="the-stones">The stones</h3>
+          <p>The finished cairn is built from four stones, and each one leads somewhere different:</p>
+          <div class="cairn">
+            <svg class="cairn__art" viewBox="0 0 403 604" role="img" aria-label="The cairn: four stacked stones">
+              <use class="cairn__stone" data-stone="4" href="#stone-bottom" />
+              <use class="cairn__stone" data-stone="3" href="#stone-third" />
+              <use class="cairn__stone" data-stone="2" href="#stone-second" />
+              <use class="cairn__stone" data-stone="1" href="#stone-top" />
+            </svg>
+            <ul class="cairn__key">
+              <li data-stone="1"><strong>Top.</strong> Opens the documentation (this page).</li>
+              <li data-stone="2"><strong>Second.</strong> Links to the GitHub source.</li>
+              <li data-stone="3"><strong>Third.</strong> Shows what’s new.</li>
+              <li data-stone="4">
+                <strong>Bottom.</strong> Opens a “buy me a coffee” support panel, right there in place.
+              </li>
+            </ul>
+          </div>
+          <p>
+            Hover or focus a stone and a short label pops up telling you what it does before you commit to clicking.
+          </p>
+
+          <h3 id="the-helper">The helper</h3>
+          <p>
+            A small flying character travels with you through the scroll journey and doubles as the site’s main way
+            of answering questions, for anyone who’d rather ask than read. It nudges first-time visitors toward
+            scrolling if they haven’t found the interaction yet, opens into a chat bubble on request, and repositions
+            itself at each stage so it’s never in the way of the stones or whatever else is on screen.
+          </p>
+          <p>
+            Ask it anything about Cairn: how to install it, what it costs, which platforms it runs on, whether it
+            handles multiple monitors, how updates work. Common questions get an instant answer that’s already
+            written out. Anything else goes to a small assistant that only knows about Cairn, and it’ll point you
+            back to this page or the GitHub README rather than guess at something it doesn’t actually know.
+          </p>
+
+          <h3 id="pages-for-everyone-else">Pages for everyone else</h3>
+          <p>
+            The scroll-and-helper experience is how the site is meant to be used, but it’s not the only option. This
+            documentation page, along with a few other static pages, exists for anyone who’d rather read straight
+            through than explore the interactive version.
+          </p>
+        </section>
+
+        <footer class="foot">
+          <p>Cairn is free and open source under the MIT license.</p>
+          <ul>
+            <li><a href="/">cairnstacks.app</a></li>
+            <li><a href="https://github.com/lukesj28/cairn">GitHub</a></li>
+            <li><a href="https://github.com/lukesj28/cairn/issues">Report an issue</a></li>
+            <li><a href="#content">Back to top</a></li>
+          </ul>
+        </footer>
+      </main>
+    </div>
+
+    <p class="visually-hidden" role="status" aria-live="polite" id="said"></p>
+  </body>
+</html>

@@ -82,9 +82,15 @@ const cairn = new Cairn(document.getElementById('cairn'), stones, { reduceMotion
 
 const buddy = new Buddy(document.getElementById('buddy'), { reduceMotion, step });
 
+const OUT = {
+  second: 'https://github.com/lukesj28/cairn',
+  third: 'https://github.com/lukesj28/cairn/releases/latest',
+};
 const kofi = document.getElementById('kofi');
-stones.addEventListener('stone', (e) => {
-  if (e.detail.name !== 'bottom') return;
+stones.addEventListener('stone', ({ detail: { name } }) => {
+  if (name === 'top') return location.assign('/docs');
+  if (OUT[name]) return window.open(OUT[name], '_blank', 'noopener');
+  if (name !== 'bottom') return;
   const frame = kofi.querySelector('iframe');
   if (!frame.src) frame.src = frame.dataset.src;
   kofi.showModal();
