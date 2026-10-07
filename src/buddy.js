@@ -20,6 +20,7 @@ const LINES = {
   cairn: 'each stone goes somewhere. pick one, or ask me anything about cairn.',
   winded: 'phew, my wings need a rest. give me a minute, then ask again.',
   lost: `I dropped my notes mid-flight. try again, or the README has it all: ${README}`,
+  tired: 'I’ve answered all I can for today. the docs have everything: https://cairnstacks.app/docs',
 };
 
 const ALLOWED_HOSTS = new Set(['github.com', 'cairnstacks.app', 'ko-fi.com', 'apple.com']);
@@ -290,6 +291,8 @@ export class Buddy {
       });
       if (res.status === 429) {
         text = LINES.winded;
+      } else if (res.status === 503) {
+        text = LINES.tired;
       } else if (res.ok) {
         const { reply } = await res.json();
         if (typeof reply === 'string' && reply) {
