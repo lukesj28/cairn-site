@@ -34,6 +34,7 @@ const reel = document.getElementById('reel');
 const wordCanvas = document.getElementById('word');
 const get = document.getElementById('get');
 const signoff = document.getElementById('signoff');
+const head = document.querySelector('.head');
 const root = document.documentElement;
 const sky = document.createElement('canvas');
 const skyCtx = sky.getContext('2d', { alpha: false });
@@ -291,6 +292,13 @@ document.getElementById('back-up').addEventListener('click', async () => {
   get.querySelector('a')?.focus({ preventScroll: true, focusVisible: false });
 });
 
+for (const el of head.querySelectorAll('.head__brand, #to-get')) {
+  el.addEventListener('click', (e) => {
+    e.preventDefault();
+    goTo(0);
+  });
+}
+
 function tiltFrame() {
   const at = (v) => Math.min(TILT - 1, (v.currentTime * TILT_FPS * (TILT - 1)) / TILT_STEPS);
   if (moving === t1Fwd) return at(t1Fwd);
@@ -320,6 +328,7 @@ const snap = (v) => Math.round(v * dpr) / dpr;
 let cover = { x: 0, y: 0, w: 0, h: 0 };
 let word = null;
 let getH = 56;
+let groupMid = 0;
 
 function layout() {
   vw = innerWidth;
@@ -332,6 +341,7 @@ function layout() {
   cover = { x: (vw - coverW) / 2, y: (vh - coverH) / 2, w: coverW, h: coverH };
   getH = get.offsetHeight;
   const bar = snap(Math.min(28, Math.max(14, vh * 0.025)));
+  groupMid = (head.offsetHeight + vh - bar) / 2 - vh * 0.015;
   root.style.setProperty('--bar', `${bar}px`);
   cairn.layout(vw, vh, cover, dpr);
   buddy.layout(vw, vh, cover, bar);
@@ -361,7 +371,7 @@ function tick(now) {
 
     const gap = Math.min(80, Math.max(40, word.xHeight * 0.58));
     const inkH = word.inkBottom - word.inkTop;
-    const groupTop = vh * 0.485 - (inkH + gap + getH) / 2;
+    const groupTop = groupMid - (inkH + gap + getH) / 2;
     const centre = groupTop - word.inkTop;
     const wordX = snap(vw / 2 - word.cssW / 2 - word.inkCx);
     const wordY = snap(centre - word.cssH / 2 - rise);

@@ -9,8 +9,6 @@
   --accent-wash: #e2eefe;
   --on-accent: #ffffff;
   --ring: #006ce5;
-  --flower: #f4d31f;
-  --flower-ink: #184e54;
   --glow: #f6c453;
   --stone-1: #b5c6dd;
   --stone-2: #a2b6d1;
@@ -65,11 +63,6 @@ body {
   font-size: 1rem;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
-}
-
-::selection {
-  background: var(--flower);
-  color: var(--flower-ink);
 }
 
 :focus-visible {
