@@ -4,6 +4,14 @@ export const DOC_CHUNKS = DOCS.split(/^(?=#{2,3} )/m).map((s) => s.trim()).filte
 
 const GH = 'https://github.com/lukesj28/cairn'
 
+export const VIDEOS = {
+  install: 'installing cairn',
+  accessibility: 'turning on Accessibility for cairn',
+  snapshot: 'saving your windows with Snapshot to New Stack',
+  apply: 'applying a stack from the menu bar',
+  'add-app': 'adding apps, resizing tiles and using two displays in the editor',
+}
+
 export const FAQ = [
   {
     q: ['What is cairn?', 'What does cairn do?', 'Tell me about cairn', 'What is this app for?', 'What does this app do?', 'Explain cairn to me', 'What is this?', 'What is this thing?', 'Why would I use cairn?', 'What is cairn for?', 'what is this', 'so what does this thing do exactly', 'why would i use this'],

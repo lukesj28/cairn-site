@@ -367,7 +367,7 @@ export class Buddy {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ message: q, history: this.history }),
+        body: JSON.stringify({ message: q, history: this.history, videos: this.state === 1 && this.clipFits }),
         signal: AbortSignal.timeout(20000),
       });
       if (res.status === 429) {
@@ -379,7 +379,7 @@ export class Buddy {
         if (typeof reply === 'string' && reply) {
           text = reply;
           clip = video;
-          this.history = [...this.history, { role: 'user', content: q }, { role: 'assistant', content: reply }].slice(-6);
+          this.history = [...this.history, { role: 'user', content: q }, { role: 'assistant', content: reply, video }].slice(-6);
         }
       }
     } catch {
