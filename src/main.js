@@ -8,8 +8,9 @@ import { Buddy } from './buddy.js';
 import appleLogo from './icons/apple.svg?raw';
 import arrowUp from '@phosphor-icons/core/bold/arrow-up-bold.svg?raw';
 import cross from '@phosphor-icons/core/bold/x-bold.svg?raw';
+import cornersOut from '@phosphor-icons/core/bold/corners-out-bold.svg?raw';
 
-for (const [name, svg] of [['apple', appleLogo], ['arrow-up', arrowUp], ['x', cross]]) {
+for (const [name, svg] of [['apple', appleLogo], ['arrow-up', arrowUp], ['x', cross], ['corners-out', cornersOut]]) {
   for (const el of document.querySelectorAll(`[data-icon="${name}"]`)) el.innerHTML = svg;
 }
 

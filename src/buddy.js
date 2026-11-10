@@ -25,6 +25,17 @@ const LINES = {
 
 const ALLOWED_HOSTS = new Set(['github.com', 'cairnstacks.app', 'ko-fi.com', 'apple.com']);
 
+const CLIPS = 'https://cdn.cairnstacks.app/tutorials';
+const TUTORIALS = {
+  install: 'installing cairn',
+  accessibility: 'turning on Accessibility for cairn',
+  snapshot: 'saving your windows with Snapshot to New Stack',
+  apply: 'applying a stack from the menu bar',
+  'add-app': 'adding apps, resizing tiles and using two displays in the editor',
+};
+const CAIRN_LEFT = 898;
+const CLIP = { max: 520, min: 260, gap: 32, edge: 32, aspect: 3 / 2 };
+
 function isAllowedUrl(urlStr) {
   try {
     const u = new URL(urlStr);
@@ -65,6 +76,35 @@ export class Buddy {
     this.says = root.querySelector('.buddy__say');
     this.form = root.querySelector('.buddy__ask');
     this.input = this.form.querySelector('input');
+    this.clip = root.querySelector('.buddy__clip');
+    this.video = this.clip.querySelector('video');
+    this.clipFits = false;
+    this.bareControls = null;
+    this.clip.querySelector('.buddy__clip-close').addEventListener('click', () => this.#tutorial(null));
+    const full = this.clip.querySelector('.buddy__clip-full');
+    if (this.video.requestFullscreen || this.video.webkitEnterFullscreen) {
+      full.addEventListener('click', () => {
+        const v = this.video;
+        (v.requestFullscreen ? v.requestFullscreen() : Promise.resolve(v.webkitEnterFullscreen())).catch(() => {});
+      });
+      document.addEventListener('fullscreenchange', () => {
+        const v = this.video;
+        if (document.fullscreenElement === v) {
+          this.bareControls = v.controls;
+          v.controls = true;
+        } else if (this.bareControls != null) {
+          v.controls = this.bareControls;
+          this.bareControls = null;
+          if (!v.controls && this.clip.classList.contains('is-open')) v.play().catch(() => {});
+        }
+      });
+    } else {
+      full.hidden = true;
+    }
+    this.clip.addEventListener('transitionend', (e) => {
+      if (e.target === this.clip && e.propertyName === 'visibility' && !this.clip.classList.contains('is-open')) this.clip.hidden = true;
+    });
+    this.video.addEventListener('error', () => this.#tutorial(null));
 
     let holder = root;
     this.veils = STONES.map(() => {
@@ -127,6 +167,22 @@ export class Buddy {
     };
     this.h = h;
     this.bar = bar;
+    const head = document.querySelector('.head')?.offsetHeight ?? 0;
+    const cx = vw / 4;
+    const cy = (head + vh - bar) / 2;
+    const cairnX = cover.x + CAIRN_LEFT * (cover.w / SRC_W);
+    const cw = Math.min(
+      CLIP.max,
+      2 * (cx - CLIP.edge),
+      2 * (cairnX - CLIP.gap - cx),
+      2 * (vh - bar - CLIP.edge - cy) * CLIP.aspect,
+    );
+    this.clipFits = vw >= 700 && cw >= CLIP.min;
+    const c = this.clip.style;
+    c.width = `${Math.round(cw)}px`;
+    c.left = `${Math.round(cx - cw / 2)}px`;
+    c.top = `${Math.round(cy - cw / CLIP.aspect / 2)}px`;
+    if (!this.clipFits) this.#tutorial(null);
     this.#move(this.pose);
     this.#veil(this.veiled);
     this.#place();
@@ -223,12 +279,36 @@ export class Buddy {
   }
 
   #toggle(open) {
+    if (!open) this.#tutorial(null);
     if (open && (!this.line || this.line.greeting)) this.#say({});
     this.open = open;
     this.bubble.classList.toggle('is-open', open);
     this.bubble.inert = !open;
     if (this.state > 0) this.body.setAttribute('aria-expanded', String(open));
     if (open) this.#place();
+  }
+
+  #tutorial(id) {
+    const v = this.video;
+    v.onloadeddata = null;
+    if (!id) {
+      this.clip.classList.remove('is-open');
+      this.clip.inert = true;
+      v.pause();
+      return;
+    }
+    this.clip.setAttribute('aria-label', `video: ${TUTORIALS[id]}`);
+    v.controls = this.reduceMotion.matches;
+    v.onloadeddata = () => {
+      if (this.clip.hidden) {
+        this.clip.hidden = false;
+        void this.clip.offsetWidth;
+      }
+      this.clip.classList.add('is-open');
+      this.clip.inert = false;
+      if (!v.controls) v.play().catch(() => {});
+    };
+    v.src = `${CLIPS}/${id}.mp4`;
   }
 
   #say({ text, asked = '', thinking = false }) {
@@ -282,6 +362,7 @@ export class Buddy {
     this.input.value = '';
     this.#say({ asked: q, thinking: true });
     let text = LINES.lost;
+    let clip = null;
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -294,9 +375,10 @@ export class Buddy {
       } else if (res.status === 503) {
         text = LINES.tired;
       } else if (res.ok) {
-        const { reply } = await res.json();
+        const { reply, video } = await res.json();
         if (typeof reply === 'string' && reply) {
           text = reply;
+          clip = video;
           this.history = [...this.history, { role: 'user', content: q }, { role: 'assistant', content: reply }].slice(-6);
         }
       }
@@ -305,5 +387,6 @@ export class Buddy {
       this.busy = false;
     }
     this.#say({ asked: q, text });
+    this.#tutorial(this.state === 1 && !this.moving && this.open && this.clipFits && Object.hasOwn(TUTORIALS, clip ?? '') ? clip : null);
   }
 }

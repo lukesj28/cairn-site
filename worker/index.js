@@ -10,6 +10,7 @@ const FAQ_GAP = 0.05
 const OFF_MARGIN = 0.03
 const FAQ_TOP_K = 2
 const DOC_TOP_K = 3
+const VIDEO_NEAR = 0.92
 const CHAT_WORDS = 4
 const FOLLOWUP = /^\s*(and|also|but|so|then|what about|how about|that|those|it|this|these)\b/i
 const REFUSAL = 'I can only help with questions about cairn.'
@@ -210,7 +211,7 @@ async function chat(request, env) {
     const queryVec = embeddings[history.length ? 1 : 0]
     const m = score(message, embeddings[0], vecs)
     const followUp = history.length > 0 && FOLLOWUP.test(message)
-    if (!followUp && m.faq >= FAQ_SURE && m.gap >= FAQ_GAP) return json({ source: 'faq', reply: FAQ[m.top].a })
+    if (!followUp && m.faq >= FAQ_SURE && m.gap >= FAQ_GAP) return json({ source: 'faq', reply: FAQ[m.top].a, video: FAQ[m.top].video })
     const g = followUp ? score(queryText, queryVec, vecs) : m
     if (CREATIVE.test(message) || (!CUE.test(message) && g.off - g.on >= OFF_MARGIN)) {
       return json({ source: 'refusal', reply: REFUSAL })
@@ -245,7 +246,7 @@ async function chat(request, env) {
     const reply = (out.response ?? out.choices?.[0]?.message?.content)?.replace(/\*\*|__|`/g, '').trim()
     if (!reply) return json({ error: 'llm_failed' }, { status: 502 })
     if (/^\s*OFFTOPIC\b/i.test(reply)) return json({ source: 'refusal', reply: REFUSAL })
-    return json({ source: 'llm', reply })
+    return json({ source: 'llm', reply, video: g.faq >= VIDEO_NEAR ? FAQ[g.top].video : undefined })
   } catch (e) {
     if (/daily free allocation|4006/i.test(String(e?.message ?? e))) return json({ error: 'quota' }, { status: 503 })
     console.error(e)

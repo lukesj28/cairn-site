@@ -48,6 +48,17 @@
               <button type="submit" class="buddy__send" aria-label="Ask" data-icon="arrow-up"></button>
             </form>
           </div>
+          <figure class="buddy__clip" inert hidden>
+            <div class="buddy__holo">
+              <div class="buddy__screen">
+                <video muted loop playsinline preload="auto" disablepictureinpicture></video>
+              </div>
+              <div class="buddy__clip-tools">
+                <button type="button" class="buddy__clip-btn buddy__clip-close" aria-label="Close video" data-icon="x"></button>
+                <button type="button" class="buddy__clip-btn buddy__clip-full" aria-label="Play video full screen" data-icon="corners-out"></button>
+              </div>
+            </div>
+          </figure>
         </div>
         <canvas id="cairn" aria-hidden="true"></canvas>
         <div id="stones" class="stones" role="group" aria-label="The cairn" inert></div>

@@ -16,10 +16,12 @@ export const FAQ = [
   {
     q: ['How do I get started?', 'How do I use cairn?', 'Quick start guide', 'Show me how to use it', 'How does cairn work?', 'Getting started tutorial'],
     a: '1. Arrange your apps how you like.\n2. Click the Cairn menu bar icon, then Snapshot to New Stack.\n3. Next time, click the icon and pick the stack by name to restore every window.',
+    video: 'snapshot',
   },
   {
     q: ['How do I download cairn?', 'How do I install cairn?', 'Where can I get cairn?', 'Download link', 'How do I install it?', 'Installation instructions', 'Where is the dmg?', 'How do I get it?', 'Where do I download the app?', 'How do I install it on my Mac?'],
     a: `Download ${GH}/releases/latest/download/Cairn.dmg (or use the Download for Mac button), open it and drag Cairn into Applications. Launch it from there and grant Accessibility access when asked.`,
+    video: 'install',
   },
   {
     q: ['What are the system requirements?', 'Which macOS versions does cairn support?', 'Will cairn run on my Mac?', 'Does it work on Apple Silicon or Intel?', 'What macOS do I need?', 'Does it work on macOS Sonoma, Ventura or Sequoia?', 'Does it run on M1, M2 or M3 Macs?', 'Does it work on my old Mac?', 'Does it run on Monterey?', 'Does it run on my MacBook Air?', 'Does it work on Big Sur or macOS 11?', 'Does it work on M4?', 'Does it run on macOS 26?'],
@@ -36,6 +38,7 @@ export const FAQ = [
   {
     q: ['Why does cairn ask for Accessibility permission?', 'Why does cairn need Accessibility access?', 'What is the permission prompt on first launch?', 'Is the Accessibility permission safe?', 'Why does it want accessibility?', 'What permissions does cairn need?', 'What does cairn do with accessibility access?', 'What is the permission popup about?', 'What is that Accessibility prompt?', 'why accessibility permission'],
     a: 'macOS only lets an app read or move other apps\' windows with Accessibility permission. Cairn uses it for exactly that: reading window positions when you snapshot and setting them when you apply. It is the only permission Cairn needs, and you can revoke it in System Settings > Privacy & Security > Accessibility.',
+    video: 'accessibility',
   },
   {
     q: ['Does cairn collect my data?', 'Is cairn private?', 'Does it track me or send analytics?', 'Does cairn need internet access?', 'Does it spy on me?', 'Does it phone home?', 'Does it send my data anywhere?', 'What data does cairn collect?', 'Do you collect any info about me?', 'Is my information shared with anyone?'],
@@ -52,6 +55,7 @@ export const FAQ = [
   {
     q: ['Does cairn work with multiple monitors?', 'Can a stack span two displays?', 'Can I use it with an external display?', 'Does it support dual monitors?', 'Does it support two monitors?', 'Can I use two screens?', 'Does it work with a second display?', 'how do i set the display count for a stack'],
     a: 'Cairn supports a main and a secondary display in one stack, each with its own canvas in the editor. Choose 2 Displays in the editor to add the second one.',
+    video: 'add-app',
   },
   {
     q: ['How many displays can I use?', 'How many monitors does cairn support?', 'How many screens can a stack use?', 'Can I use three or more monitors?', 'Does cairn support more than two displays?', 'What is the maximum number of displays?', 'Can I use 3 screens?', 'Does it support three monitors?'],
@@ -76,18 +80,22 @@ export const FAQ = [
   {
     q: ['How do I create a stack?', 'How do I save my window layout?', 'How do I snapshot my windows?', 'How do I capture my current layout?', 'How do I save my layout?', 'How do I make a new layout?', 'How do I record my windows?', 'can i save a layout with xcode and safari side by side?'],
     a: 'Arrange your windows, click the Cairn menu bar icon and choose Snapshot to New Stack. It records every standard window of your running apps as a new stack and opens the Cairn window so you can rename or tweak it.',
+    video: 'snapshot',
   },
   {
     q: ['Can I create a stack from scratch?', 'How do I make a blank stack?', 'How do I add an app to a stack?', 'Can I add apps manually?', 'How do I add an application?', 'Can I build a stack without taking a snapshot?', 'Can I add an app that is not in the Applications folder?'],
     a: 'You can build a stack from scratch: click the plus button at the bottom of the sidebar for an empty stack, then use Add App in the editor. The file picker opens at /Applications, but you can browse to an app anywhere and pick several at once.',
+    video: 'add-app',
   },
   {
     q: ['How do I apply a stack?', 'How do I restore my layout?', 'How do I put my windows back?', 'How do I switch layouts?', 'How do I restore my windows?', 'How do I switch to my coding layout?', 'How do I use a saved stack?', 'How do I open a layout?'],
     a: 'Click the Cairn menu bar icon and pick the stack by name. You can also press Apply in the editor, or right-click the stack in the sidebar and choose Apply Layout. Cairn launches missing apps, waits for their windows and moves everything into place.',
+    video: 'apply',
   },
   {
     q: ['How do I edit a stack?', 'How do I move or resize a window in a stack?', 'How do I rearrange windows in the editor?', 'How do I change a window position?', 'How do I resize a window in the editor?', 'How do I change the layout of a stack?', 'Can I drag windows around?', 'How do I edit a layout?', 'How do I change a stack?'],
     a: 'Open the stack in the Cairn window. Each window is a tile on a canvas: drag a tile to move it, drag any edge or corner to resize. The inspector on the right has quick presets and exact X, Y, width and height fields.',
+    video: 'add-app',
   },
   {
     q: ['What is the snap grid?', 'How do I turn off snapping?', 'How do I place windows freely?', 'What does the Shift key do?', 'How do I turn off snap?', 'What is the shift key for?', 'Can I change the grid size?'],
@@ -140,6 +148,7 @@ export const FAQ = [
   {
     q: ['Cairn keeps asking for Accessibility permission', 'Accessibility permission not working', 'Capture or apply does nothing', 'Permission banner will not go away', 'It keeps asking me for permissions', 'Cairn does nothing when I click a stack', 'I granted permission but it still does not work', 'It says Accessibility Permission Required', 'Nothing happens when I apply a stack', 'it doesnt do anything when i apply'],
     a: 'Open System Settings > Privacy & Security > Accessibility and make sure Cairn is listed and switched on. After reinstalling, remove the old Cairn entry first, approve it again and relaunch Cairn.',
+    video: 'accessibility',
   },
   {
     q: ['A window did not move', 'A window ended up the wrong size', 'Why will not an app resize correctly?', 'Window does not fit the layout', 'A window won\'t move', 'The window is the wrong size after applying', 'One app ignores my layout', "A window won't resize", 'Window does not resize'],
@@ -228,6 +237,7 @@ export const FAQ = [
   {
     q: ['Does applying a stack open apps that are closed?', 'Will cairn launch apps that are not running?', 'Does it open the apps for me?', 'Do I have to open the apps first?', 'What happens when I apply a stack?', 'What does applying a stack do?', 'what happens when i click apply'],
     a: 'Applying a stack launches any app in it that is not already running, waits for its windows, opens extra windows if the stack lists more than one, then moves and resizes everything into place.',
+    video: 'apply',
   },
   {
     q: ['Will it close my other windows?', 'Does applying a stack move windows that are not in it?', 'What happens to windows that are not in the stack?', 'Does cairn close or minimize other apps?', 'Will it hide my other windows?'],
@@ -260,6 +270,7 @@ export const FAQ = [
   {
     q: ['Why is my new stack empty?', 'Snapshot captured nothing', 'Why did my snapshot create an empty stack?', 'Snapshot erased my stack', 'My snapshot has no windows'],
     a: 'An empty snapshot means Cairn could not see any windows, almost always because Accessibility permission is missing. Snapshot to New Stack then makes an empty stack, and Snapshot in the editor empties the stack. Turn Cairn on in System Settings > Privacy & Security > Accessibility and snapshot again.',
+    video: 'accessibility',
   },
   {
     q: ['Can I edit stacks.json by hand?', 'What format is the stacks file?', 'What is inside stacks.json?', 'Can I edit my stacks in a text editor?'],
@@ -272,6 +283,7 @@ export const FAQ = [
   {
     q: ['How do I move a window to the second display?', 'How do I put a window on the other monitor in the editor?', 'How do I change which display a window is on?'],
     a: 'With the stack set to 2 Displays, drag the tile\'s center onto the other canvas, or select the tile and pick Display 1 or Display 2 in the inspector.',
+    video: 'add-app',
   },
   {
     q: ['How do I remove a window from a stack?', 'How do I delete an app from a stack?', 'How do I take an app out of a layout?', 'How do I remove an app?'],
