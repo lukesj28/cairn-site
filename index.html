@@ -31,31 +31,29 @@
       <div class="stage">
         <div id="reel" class="reel" aria-hidden="true"></div>
         <h1 class="visually-hidden">cairn</h1>
-        <div id="buddy" class="buddy">
-          <button type="button" class="buddy__body" aria-label="Scroll down">
-            <span class="buddy__art">
-              <span class="buddy__turn">
-                <img src="/src/buddy.svg" alt="" draggable="false" />
-                <img class="buddy__back" src="/src/buddy-back.svg" alt="" draggable="false" />
-              </span>
-            </span>
+        <div id="helper" class="helper">
+          <button type="button" class="helper__body" aria-label="Ask about cairn" aria-expanded="false">
+            <span class="helper__art is-out"></span>
           </button>
-          <div class="buddy__bubble" role="group" aria-label="cairn’s helper" inert>
-            <p class="buddy__asked" hidden></p>
-            <p class="buddy__say" aria-live="polite"></p>
-            <form class="buddy__ask" hidden>
+          <button type="button" class="perch" aria-label="Scroll down">
+            <span class="helper__art is-out"></span>
+          </button>
+          <div class="helper__bubble" role="group" aria-label="cairn’s helper" inert>
+            <p class="helper__asked" hidden></p>
+            <p class="helper__say" aria-live="polite"></p>
+            <form class="helper__ask" hidden>
               <input type="text" name="q" placeholder="ask about cairn" aria-label="Ask a question about cairn" maxlength="500" autocomplete="off" enterkeyhint="send" />
-              <button type="submit" class="buddy__send" aria-label="Ask" data-icon="arrow-up"></button>
+              <button type="submit" class="helper__send" aria-label="Ask" data-icon="arrow-up"></button>
             </form>
           </div>
-          <figure class="buddy__clip" inert hidden>
-            <div class="buddy__holo">
-              <div class="buddy__screen">
+          <figure class="helper__clip" inert hidden>
+            <div class="helper__holo">
+              <div class="helper__screen">
                 <video muted loop playsinline preload="auto" disablepictureinpicture></video>
               </div>
-              <div class="buddy__clip-tools">
-                <button type="button" class="buddy__clip-btn buddy__clip-close" aria-label="Close video" data-icon="x"></button>
-                <button type="button" class="buddy__clip-btn buddy__clip-full" aria-label="Play video full screen" data-icon="corners-out"></button>
+              <div class="helper__clip-tools">
+                <button type="button" class="helper__clip-btn helper__clip-close" aria-label="Close video" data-icon="x"></button>
+                <button type="button" class="helper__clip-btn helper__clip-full" aria-label="Play video full screen" data-icon="corners-out"></button>
               </div>
             </div>
           </figure>

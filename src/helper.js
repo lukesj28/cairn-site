@@ -1,23 +1,22 @@
-import { STONES } from './cairn-stones.js';
+import { Perch, Flyer } from './fox.js';
 
 const SRC_W = 1920;
-const FAR = 0.8;
-const TURN = 320;
-const POP_AFTER = 3400;
-const README = 'https://github.com/lukesj28/cairn';
-const EASE = {
-  out: 'cubic-bezier(0.16, 1, 0.3, 1)',
-  pop: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
-  drop: 'cubic-bezier(0.5, 0, 0.9, 0.4)',
-  glide: 'cubic-bezier(0.45, 0, 0.25, 1)',
+const SRC_H = 1080;
+const ARRIVE_MS = 2100;
+const JUMP_MS = 1400;
+const THINK_AFTER = 700;
+const NEAR = 0.55;
+const LEDGE = 668 / 726;
+const FRAME = {
+  perch: { w: 1262, h: 726, box: [0.4, 0.25, 0.8, LEDGE] },
+  fly: { w: 920, h: 544, box: [0.29, 0.04, 0.72, 0.87] },
 };
-const ALOFT = ['side', 'far'];
+const README = 'https://github.com/lukesj28/cairn';
 const LINES = {
   scroll: 'psst, there’s more. scroll down.',
   swipe: 'psst, there’s more. swipe up.',
   intro: 'hi! I answer questions about cairn. ask me anything, or scroll down to the cairn to explore on your own.',
   introTouch: 'hi! I answer questions about cairn. ask me anything, or swipe up to the cairn to explore on your own.',
-  cairn: 'each stone goes somewhere. pick one, or ask me anything about cairn.',
   winded: 'phew, my wings need a rest. give me a minute, then ask again.',
   lost: `I dropped my notes mid-flight. try again, or the README has it all: ${README}`,
   tired: 'I’ve answered all I can for today. the docs have everything: https://cairnstacks.app/docs',
@@ -57,31 +56,34 @@ function words(text) {
     a.href = url;
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
-    a.textContent = url.replace(/^https?:\/\/(www\.)?/, '');
-    out.push(text.slice(at, m.index), a);
+    a.textContent = url.replace(/^https?:\/\/(www\.)?/, '').toLowerCase();
+    out.push(text.slice(at, m.index).toLowerCase(), a);
     at = m.index + url.length;
   }
-  out.push(text.slice(at));
+  out.push(text.slice(at).toLowerCase());
   return out;
 }
 
-export class Buddy {
+export class Helper {
   constructor(root, { reduceMotion, step }) {
     this.root = root;
     this.reduceMotion = reduceMotion;
     this.step = step;
-    this.body = root.querySelector('.buddy__body');
-    this.bubble = root.querySelector('.buddy__bubble');
-    this.asked = root.querySelector('.buddy__asked');
-    this.says = root.querySelector('.buddy__say');
-    this.form = root.querySelector('.buddy__ask');
+    this.body = root.querySelector('.helper__body');
+    this.flyer = new Flyer(this.body.querySelector('.helper__art'), reduceMotion);
+    this.perchEl = root.querySelector('.perch');
+    this.perch = new Perch(this.perchEl.querySelector('.helper__art'), reduceMotion);
+    this.bubble = root.querySelector('.helper__bubble');
+    this.asked = root.querySelector('.helper__asked');
+    this.says = root.querySelector('.helper__say');
+    this.form = root.querySelector('.helper__ask');
     this.input = this.form.querySelector('input');
-    this.clip = root.querySelector('.buddy__clip');
+    this.clip = root.querySelector('.helper__clip');
     this.video = this.clip.querySelector('video');
     this.clipFits = false;
     this.bareControls = null;
-    this.clip.querySelector('.buddy__clip-close').addEventListener('click', () => this.#tutorial(null));
-    const full = this.clip.querySelector('.buddy__clip-full');
+    this.clip.querySelector('.helper__clip-close').addEventListener('click', () => this.#tutorial(null));
+    const full = this.clip.querySelector('.helper__clip-full');
     if (this.video.requestFullscreen || this.video.webkitEnterFullscreen) {
       full.addEventListener('click', () => {
         const v = this.video;
@@ -106,22 +108,14 @@ export class Buddy {
     });
     this.video.addEventListener('error', () => this.#tutorial(null));
 
-    let holder = root;
-    this.veils = STONES.map(() => {
-      const v = document.createElement('div');
-      v.className = 'buddy__veil';
-      holder.prepend(v);
-      holder = v;
-      return v;
-    });
-    holder.append(this.body);
-
     this.state = -1;
-    this.pose = 'below';
-    this.spots = {};
+    this.geo = {};
+    this.side = null;
+    this.focusX = 0;
+    this.carried = '';
+    this.off = false;
     this.turn = 0;
     this.moving = false;
-    this.veiled = false;
     this.open = false;
     this.busy = false;
     this.hinted = false;
@@ -130,12 +124,12 @@ export class Buddy {
     this.history = [];
     this.vw = 0;
     this.vh = 0;
-    this.cover = { x: 0, y: 0, w: SRC_W };
 
     this.body.addEventListener('click', () => {
-      if (this.moving) return;
-      if (this.state === 0) this.step(1);
-      else this.#toggle(!this.open);
+      if (!this.moving && this.state === 1) this.#toggle(!this.open);
+    });
+    this.perchEl.addEventListener('click', () => {
+      if (!this.moving && this.state === 0) this.step(1);
     });
     this.form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -151,21 +145,26 @@ export class Buddy {
   layout(vw, vh, cover, bar) {
     this.vw = vw;
     this.vh = vh;
-    this.cover = cover;
-    const w = this.body.offsetWidth;
-    const h = this.body.offsetHeight;
-    const cornerX = vw - Math.max(20, Math.min(64, vw * 0.045)) - w / 2;
-    const cornerY = vh - bar - h / 2 + 6;
-    const sideX = vw - Math.max(22, vw * 0.07) - w / 2;
-    this.spots = {
-      below: { x: cornerX, y: vh + h, s: 1 },
-      hop: { x: cornerX, y: cornerY - 26, s: 1 },
-      corner: { x: cornerX, y: cornerY, s: 1 },
-      away: { x: vw + w, y: vh * 0.5, s: 1 },
-      side: { x: sideX, y: vh * 0.5, s: 1 },
-      far: { x: sideX - vw * 0.06, y: vh * 0.43, s: FAR },
-    };
-    this.h = h;
+    const s = Math.min(cover.h / SRC_H, ((vw < 700 ? 0.8 : 0.5) * vw) / FRAME.perch.w);
+    for (const [n, { w, h, box }] of Object.entries(FRAME)) {
+      const fw = w * s;
+      const fh = h * s;
+      this.geo[n] = { fw, fh, x: box[0] * fw, y: box[1] * fh, w: (box[2] - box[0]) * fw, h: (box[3] - box[1]) * fh };
+    }
+    const g1 = this.geo.perch;
+    this.perchAt = { x: vw + 2 - g1.fw + g1.x, y: vh - bar - LEDGE * g1.fh + g1.y };
+    this.#size(this.perchEl, g1);
+    const pe = this.perchEl.style;
+    pe.setProperty('--x', `${this.perchAt.x.toFixed(1)}px`);
+    pe.setProperty('--y', `${this.perchAt.y.toFixed(1)}px`);
+    const g2 = this.geo.fly;
+    this.#size(this.body, g2);
+    const left2 = vw - Math.max(12, vw * 0.035) - g2.fw;
+    this.side = { x: left2 + g2.x + g2.w / 2, y: Math.min(vh * 0.58, vh - bar - g2.fh / 2) - g2.fh / 2 + g2.y + g2.h / 2 };
+    this.body.style.setProperty('--x', `${this.side.x.toFixed(1)}px`);
+    this.body.style.setProperty('--y', `${this.side.y.toFixed(1)}px`);
+    this.focusX = cover.x + cover.w / 2;
+    this.carried = '';
     this.bar = bar;
     const head = document.querySelector('.head')?.offsetHeight ?? 0;
     const cx = vw / 4;
@@ -183,99 +182,88 @@ export class Buddy {
     c.left = `${Math.round(cx - cw / 2)}px`;
     c.top = `${Math.round(cy - cw / CLIP.aspect / 2)}px`;
     if (!this.clipFits) this.#tutorial(null);
-    this.#move(this.pose);
-    this.#veil(this.veiled);
     this.#place();
   }
 
-  leave(from, to, ms) {
+  leave(from, to) {
     this.turn++;
     this.moving = true;
     this.#toggle(false);
-    this.root.classList.toggle('is-turned', to === 2);
+    this.flyer.want = 'idle';
     if (from === 0) {
-      this.#move('hop', 160, EASE.out);
-      this.#after(160, () => this.#move('below', 340, EASE.drop));
-    } else if (to === 0) {
-      this.#move('away', 450, EASE.drop);
+      this.perch.dive();
+      this.flyer.start();
     } else if (to === 2) {
-      this.#after(TURN, () => this.#move('far', Math.max(TURN, ms - TURN), EASE.glide));
-    } else {
-      this.#veil(false);
-      this.#move('side', ms, EASE.glide);
+      if (this.reduceMotion.matches) this.flyer.end();
+    } else if (from === 2) {
+      this.flyer.start();
     }
   }
 
   arrive(state) {
     this.turn++;
+    const first = this.state < 0;
     this.state = state;
     this.moving = false;
-    this.root.classList.remove('is-turned');
-    this.body.setAttribute('aria-label', state === 0 ? 'Scroll down' : 'Ask about cairn');
-    if (state === 0) this.body.removeAttribute('aria-expanded');
-    else this.body.setAttribute('aria-expanded', String(this.open));
+    this.body.setAttribute('aria-expanded', String(this.open));
 
     if (state === 0) {
-      this.#veil(false);
-      this.#move('below');
-      const wait = this.hinted ? 200 : POP_AFTER;
-      this.#after(wait, () => this.#move('corner', 700, EASE.pop));
-      this.#after(wait + 750, () => {
+      this.flyer.end();
+      this.perch.reset();
+      const wait = first ? ARRIVE_MS : 200;
+      this.#after(wait, () => {
+        this.perch.jumpUp();
+        this.flyer.warm();
+      });
+      this.#after(wait + JUMP_MS, () => {
         if (this.hinted) return;
         this.hinted = true;
         this.#toggle(true);
       });
+    } else if (state === 2) {
+      this.flyer.end();
     } else if (state === 1) {
-      this.#veil(false);
-      const fromGround = !ALOFT.includes(this.pose);
-      if (fromGround) this.#move('away');
-      this.#after(60, () => this.#move('side', fromGround ? 1100 : 600, EASE.out));
+      this.flyer.start();
+      this.flyer.want = 'answer';
       this.#after(800, () => {
         if (this.greeted) return;
         this.greeted = true;
         this.#toggle(true);
       });
-    } else {
-      this.#veil(true);
-      this.#move('far', 600, EASE.out);
     }
+  }
+
+  carry(rideY, passU) {
+    if (!this.side) return;
+    const k = NEAR / (NEAR - Math.min(passU, NEAR * 0.99));
+    const x = (this.side.x - this.focusX) * (k - 1);
+    const g = this.geo.fly;
+    const off =
+      this.side.x + x - k * (g.x + g.w / 2) >= this.vw || this.side.y + rideY - k * (g.y + g.h / 2) >= this.vh;
+    if (off !== this.off) {
+      this.off = off;
+      this.body.style.display = off ? 'none' : '';
+    }
+    if (off) this.flyer.pause();
+    else this.flyer.resume();
+    const css = off || (!x && !rideY && k === 1) ? '' : `translate3d(${x.toFixed(1)}px, ${rideY.toFixed(1)}px, 0) scale(${k.toFixed(4)})`;
+    if (css === this.carried) return;
+    this.carried = css;
+    this.body.style.transform = css;
+  }
+
+  #size(el, g) {
+    const b = el.style;
+    b.setProperty('--w', `${g.w.toFixed(1)}px`);
+    b.setProperty('--h', `${g.h.toFixed(1)}px`);
+    b.setProperty('--fw', `${g.fw.toFixed(1)}px`);
+    b.setProperty('--fx', `${(-g.x).toFixed(1)}px`);
+    b.setProperty('--fy', `${(-g.y).toFixed(1)}px`);
   }
 
   #after(ms, fn) {
     const turn = this.turn;
     setTimeout(() => turn === this.turn && fn(), this.reduceMotion.matches ? Math.min(ms, 60) : ms);
-  }
-
-  #move(pose, ms = 0, ease = EASE.out) {
-    const p = this.spots[pose];
-    this.pose = pose;
-    if (!p) return;
-    const b = this.body.style;
-    b.setProperty('--ms', `${this.reduceMotion.matches ? 0 : Math.round(ms)}ms`);
-    b.setProperty('--ease', ease);
-    b.setProperty('--x', `${p.x.toFixed(1)}px`);
-    b.setProperty('--y', `${p.y.toFixed(1)}px`);
-    b.setProperty('--s', p.s.toFixed(3));
-    this.root.classList.toggle('is-aloft', ALOFT.includes(pose));
-    this.root.classList.toggle('is-gone', pose === 'below' || pose === 'away');
-  }
-
-  #veil(on) {
-    this.veiled = on;
-    if (!on) {
-      for (const v of this.veils) v.style.clipPath = '';
-      return;
-    }
-    const { cover, vw, vh } = this;
-    const s = cover.w / SRC_W;
-    this.veils.forEach((v, i) => {
-      const pts = STONES[i].points;
-      let d = `M0 0H${vw}V${vh}H0Z`;
-      for (let j = 0; j < pts.length; j += 2) {
-        d += `${j ? 'L' : 'M'}${(cover.x + pts[j] * s).toFixed(1)} ${(cover.y + pts[j + 1] * s).toFixed(1)}`;
-      }
-      v.style.clipPath = `path(evenodd, "${d}Z")`;
-    });
   }
 
   #toggle(open) {
@@ -319,8 +307,6 @@ export class Buddy {
       if (this.state === 0) {
         hint = true;
         text = touch ? LINES.swipe : LINES.scroll;
-      } else if (this.state === 2) {
-        text = LINES.cairn;
       } else {
         text = touch ? LINES.introTouch : LINES.intro;
       }
@@ -330,22 +316,29 @@ export class Buddy {
     this.asked.textContent = asked;
     if (thinking) {
       this.says.innerHTML =
-        '<span class="buddy__dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="visually-hidden">thinking</span>';
+        '<span class="helper__dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="visually-hidden">thinking</span>';
     } else {
       this.says.replaceChildren(...words(text));
     }
     this.says.scrollTop = 0;
     this.form.hidden = hint;
-    this.bubble.classList.toggle('buddy__bubble--hint', hint);
-    this.root.classList.toggle('is-thinking', thinking);
+    this.bubble.classList.toggle('helper__bubble--hint', hint);
     this.#place();
   }
 
   #place() {
-    const p = this.spots[this.pose];
-    if (!p || !this.vw) return;
+    if (!this.vw) return;
+    let p;
+    let top;
+    if (this.state <= 0) {
+      const g = this.geo.perch;
+      p = { x: this.perchAt.x + g.w / 2 };
+      top = this.perchAt.y - 22;
+    } else {
+      p = this.side;
+      top = p.y - this.geo.fly.h / 2 - 22;
+    }
     const edge = 16;
-    const top = p.y - (this.h * p.s) / 2 - 30;
     const b = this.bubble.style;
     b.setProperty('--room', `${Math.round(Math.max(140, top - this.bar - 12))}px`);
     const w = this.bubble.offsetWidth;
@@ -361,6 +354,9 @@ export class Buddy {
     this.busy = true;
     this.input.value = '';
     this.#say({ asked: q, thinking: true });
+    const think = setTimeout(() => {
+      this.flyer.want = 'think';
+    }, THINK_AFTER);
     let text = LINES.lost;
     let clip = null;
     try {
@@ -385,7 +381,9 @@ export class Buddy {
     } catch {
     } finally {
       this.busy = false;
+      clearTimeout(think);
     }
+    this.flyer.want = text === LINES.lost || text === LINES.winded || text === LINES.tired ? 'idle' : 'answer';
     this.#say({ asked: q, text });
     this.#tutorial(this.state === 1 && !this.moving && this.open && this.clipFits && Object.hasOwn(TUTORIALS, clip ?? '') ? clip : null);
   }

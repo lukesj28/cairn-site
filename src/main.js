@@ -4,7 +4,7 @@ import '@fontsource/fredoka/700.css';
 import './style.css';
 import { CloudWord } from './cloud.js';
 import { Cairn } from './cairn.js';
-import { Buddy } from './buddy.js';
+import { Helper } from './helper.js';
 import appleLogo from './icons/apple.svg?raw';
 import arrowUp from '@phosphor-icons/core/bold/arrow-up-bold.svg?raw';
 import cross from '@phosphor-icons/core/bold/x-bold.svg?raw';
@@ -29,6 +29,11 @@ const LOOP2_REENTRY = 91 / FPS;
 const JOIN_MS = 140;
 const LEAVE_MS = 320;
 const DISSOLVE_MS = 480;
+const PUSH = [
+  0, 0.015, 0.023, 0.038, 0.047, 0.064, 0.082, 0.094, 0.109, 0.126, 0.146, 0.163, 0.188, 0.211, 0.229, 0.259,
+  0.28, 0.31, 0.331, 0.354, 0.38, 0.404, 0.44, 0.476, 0.496, 0.523, 0.555, 0.582, 0.607, 0.633, 0.66, 0.696,
+  0.73, 0.751, 0.776, 0.8, 0.826, 0.855, 0.882, 0.905, 0.92, 0.939, 0.956, 0.97, 0.985, 0.993, 0.999, 1,
+];
 
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const reel = document.getElementById('reel');
@@ -82,7 +87,7 @@ const TILT_STEPS = Math.round(((TILT - 1) * TILT_FPS) / FPS);
 const stones = document.getElementById('stones');
 const cairn = new Cairn(document.getElementById('cairn'), stones, { reduceMotion });
 
-const buddy = new Buddy(document.getElementById('buddy'), { reduceMotion, step });
+const helper = new Helper(document.getElementById('helper'), { reduceMotion, step });
 
 const OUT = {
   second: 'https://github.com/lukesj28/cairn',
@@ -196,9 +201,7 @@ async function step(dir) {
   if (moving || to < 0 || to > 2) return false;
   signoff.classList.remove('is-here');
   cairn.leave();
-  const clip = dir > 0 ? (state === 0 ? t1Fwd : t2Fwd) : (state === 1 ? t1Rev : t2Rev);
-  const glide = clip?.duration;
-  buddy.leave(state, to, reduceMotion.matches || !Number.isFinite(glide) ? 600 : glide * 1000);
+  helper.leave(state, to);
 
   if (reduceMotion.matches) {
     const still = [t1Fwd, loop2, loop3][to];
@@ -220,7 +223,7 @@ async function step(dir) {
   signoff.classList.toggle('is-here', state === 2);
   if (state === 2) cairn.enter();
   get.inert = state !== 0;
-  buddy.arrive(state);
+  helper.arrive(state);
   return true;
 }
 
@@ -235,7 +238,7 @@ addEventListener(
   'wheel',
   (e) => {
     if (e.ctrlKey || kofi.open) return;
-    const says = e.target instanceof Element && e.target.closest('.buddy__say');
+    const says = e.target instanceof Element && e.target.closest('.helper__say');
     if (says && says.scrollHeight > says.clientHeight) return;
     e.preventDefault();
     clearTimeout(wheelQuiet);
@@ -264,7 +267,7 @@ addEventListener(
 addEventListener(
   'touchmove',
   (e) => {
-    if (touchY == null || kofi.open || e.target.closest?.('.buddy__bubble')) return;
+    if (touchY == null || kofi.open || e.target.closest?.('.helper__bubble')) return;
     const dy = touchY - e.touches[0].clientY;
     if (Math.abs(dy) < 24) return;
     touchY = null;
@@ -300,17 +303,45 @@ for (const el of head.querySelectorAll('.head__brand, #to-get')) {
   });
 }
 
+const clocks = new Map();
+function clockOf(v) {
+  const t = v.currentTime;
+  const now = performance.now();
+  const c = clocks.get(v);
+  if (!c || v.paused) {
+    clocks.set(v, { e: t, at: now, from: t });
+    return t;
+  }
+  const dt = (now - c.at) / 1000;
+  c.at = now;
+  if (t === c.from) return (c.e = t);
+  c.e += dt * v.playbackRate;
+  if (Math.abs(t - c.e) > 0.1) c.e = t;
+  else c.e += (t - c.e) * Math.min(1, dt * 4);
+  return Number.isFinite(v.duration) ? Math.min(c.e, v.duration) : c.e;
+}
+
 function tiltFrame() {
-  const at = (v) => Math.min(TILT - 1, (v.currentTime * TILT_FPS * (TILT - 1)) / TILT_STEPS);
+  const at = (v) => Math.min(TILT - 1, (clockOf(v) * TILT_FPS * (TILT - 1)) / TILT_STEPS);
   if (moving === t1Fwd) return at(t1Fwd);
   if (moving === t1Rev) return TILT - 1 - at(t1Rev);
   return state === 0 ? 0 : TILT - 1;
 }
+const PUSH_LAG = 2;
+function pushAt() {
+  if (moving === t2Fwd) return sample(PUSH, clockOf(t2Fwd) * FPS - PUSH_LAG);
+  if (moving === t2Rev) return 1 - sample(PUSH, clockOf(t2Rev) * FPS - PUSH_LAG);
+  return state === 2 ? 1 : 0;
+}
 const WORD_GONE = 0.4238;
 const GET_GONE = 0.1027;
+function sample(table, f) {
+  const at = Math.max(0, Math.min(table.length - 1, f));
+  const i = Math.min(table.length - 2, Math.floor(at));
+  return table[i] + (table[i + 1] - table[i]) * (at - i);
+}
 function panAt(f) {
-  const i = Math.min(TILT - 2, Math.floor(f));
-  return PAN[i] + (PAN[i + 1] - PAN[i]) * Math.min(1, f - i);
+  return sample(PAN, f);
 }
 
 const tilt = { x: 0, y: 0, tx: 0, ty: 0 };
@@ -345,7 +376,7 @@ function layout() {
   groupMid = (head.offsetHeight + vh - bar) / 2 - vh * 0.015;
   root.style.setProperty('--bar', `${bar}px`);
   cairn.layout(vw, vh, cover, dpr);
-  buddy.layout(vw, vh, cover, bar);
+  helper.layout(vw, vh, cover, bar);
   if (word) word.resize(Math.min(vw < 700 ? vw * 0.84 : vw * 0.48, 860), dpr);
 }
 addEventListener('resize', layout);
@@ -359,6 +390,7 @@ function tick(now) {
   last = now;
   paint(now);
   cairn.paint(dt);
+  helper.carry((PAN[TILT - 1] - panAt(tiltFrame())) * coverH, pushAt());
 
   tilt.x += (tilt.tx - tilt.x) * (1 - Math.exp(-dt * 3));
   tilt.y += (tilt.ty - tilt.y) * (1 - Math.exp(-dt * 3));
@@ -409,6 +441,6 @@ async function boot() {
   lastWordKey = '';
   layout();
   revealStart = performance.now();
-  buddy.arrive(0);
+  helper.arrive(0);
 }
 boot();
