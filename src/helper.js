@@ -11,6 +11,13 @@ const FRAME = {
   perch: { w: 1262, h: 726, box: [0.4, 0.25, 0.8, LEDGE] },
   fly: { w: 920, h: 544, box: [0.29, 0.04, 0.72, 0.87] },
 };
+const FLY = { scale: 0.5, x: 1480, feet: 660, clear: 170 };
+const CAIRN_TOP = 555;
+const ASK = { w: 340, h: 52, floor: 28 };
+const TAIL = 20;
+const BUBBLE_RADIUS = 26;
+const SVG = 'http://www.w3.org/2000/svg';
+const NARROW = 700;
 const README = 'https://github.com/lukesj28/cairn';
 const LINES = {
   scroll: 'psst, there’s more. scroll down.',
@@ -46,6 +53,22 @@ function isAllowedUrl(urlStr) {
   }
 }
 
+function label(url) {
+  const u = new URL(url);
+  const parts = u.pathname.split('/').filter(Boolean);
+  const last = parts.at(-1) ?? '';
+  if (/\.[a-z0-9]{2,4}$/i.test(last)) return last.toLowerCase();
+  const host = u.hostname.replace(/^www\./, '');
+  const short = host + u.pathname.replace(/\/$/, '') + u.hash;
+  return (short.length <= 30 || parts.length < 3 ? short : `${host}/…/${last}${u.hash}`).toLowerCase();
+}
+
+function frameGeo({ w, h, box }, s) {
+  const fw = w * s;
+  const fh = h * s;
+  return { fw, fh, x: box[0] * fw, y: box[1] * fh, w: (box[2] - box[0]) * fw, h: (box[3] - box[1]) * fh };
+}
+
 function words(text) {
   const out = [];
   let at = 0;
@@ -56,7 +79,7 @@ function words(text) {
     a.href = url;
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
-    a.textContent = url.replace(/^https?:\/\/(www\.)?/, '').toLowerCase();
+    a.textContent = label(url);
     out.push(text.slice(at, m.index).toLowerCase(), a);
     at = m.index + url.length;
   }
@@ -74,6 +97,12 @@ export class Helper {
     this.perchEl = root.querySelector('.perch');
     this.perch = new Perch(this.perchEl.querySelector('.helper__art'), reduceMotion);
     this.bubble = root.querySelector('.helper__bubble');
+    this.tail = document.createElementNS(SVG, 'svg');
+    this.tail.classList.add('helper__tail');
+    this.tail.setAttribute('aria-hidden', 'true');
+    this.tailPath = document.createElementNS(SVG, 'path');
+    this.tail.append(this.tailPath);
+    this.bubble.append(this.tail);
     this.asked = root.querySelector('.helper__asked');
     this.says = root.querySelector('.helper__say');
     this.form = root.querySelector('.helper__ask');
@@ -142,41 +171,45 @@ export class Helper {
     });
   }
 
-  layout(vw, vh, cover, bar) {
+  layout(vw, vh, cover, bar, head) {
     this.vw = vw;
     this.vh = vh;
-    const s = Math.min(cover.h / SRC_H, ((vw < 700 ? 0.8 : 0.5) * vw) / FRAME.perch.w);
-    for (const [n, { w, h, box }] of Object.entries(FRAME)) {
-      const fw = w * s;
-      const fh = h * s;
-      this.geo[n] = { fw, fh, x: box[0] * fw, y: box[1] * fh, w: (box[2] - box[0]) * fw, h: (box[3] - box[1]) * fh };
-    }
-    const g1 = this.geo.perch;
+    this.head = head;
+    const narrow = vw < NARROW;
+    const k = cover.h / SRC_H;
+    const g1 = frameGeo(FRAME.perch, Math.min(k, ((narrow ? 0.8 : 0.5) * vw) / FRAME.perch.w));
+    this.geo.perch = g1;
     this.perchAt = { x: vw + 2 - g1.fw + g1.x, y: vh - bar - LEDGE * g1.fh + g1.y };
     this.#size(this.perchEl, g1);
     const pe = this.perchEl.style;
     pe.setProperty('--x', `${this.perchAt.x.toFixed(1)}px`);
     pe.setProperty('--y', `${this.perchAt.y.toFixed(1)}px`);
-    const g2 = this.geo.fly;
+    const g2 = frameGeo(FRAME.fly, Math.min(FLY.scale * k, ((narrow ? 0.6 : 0.75) * vw) / FRAME.fly.w));
+    this.geo.fly = g2;
     this.#size(this.body, g2);
-    const left2 = vw - Math.max(12, vw * 0.035) - g2.fw;
-    this.side = { x: left2 + g2.x + g2.w / 2, y: Math.min(vh * 0.58, vh - bar - g2.fh / 2) - g2.fh / 2 + g2.y + g2.h / 2 };
-    this.body.style.setProperty('--x', `${this.side.x.toFixed(1)}px`);
-    this.body.style.setProperty('--y', `${this.side.y.toFixed(1)}px`);
+    const wingR = (g2.fw - g2.x - g2.w / 2) * 0.85;
+    const sx = Math.min(cover.x + FLY.x * (cover.w / SRC_W), vw - 8 - wingR);
+    let feet = cover.y + FLY.feet * k;
+    if (narrow) feet = Math.min(feet, cover.y + CAIRN_TOP * k - 12);
+    feet = Math.min(Math.max(feet, head + 120 + g2.h), vh - bar - ASK.h - ASK.floor - 24 - FLY.clear * k);
+    const sy = feet - g2.h / 2;
+    this.side = { x: sx, y: sy };
+    const bs = this.body.style;
+    bs.setProperty('--x', `${sx.toFixed(1)}px`);
+    bs.setProperty('--y', `${sy.toFixed(1)}px`);
     this.focusX = cover.x + cover.w / 2;
     this.carried = '';
     this.bar = bar;
-    const head = document.querySelector('.head')?.offsetHeight ?? 0;
-    const cx = vw / 4;
-    const cy = (head + vh - bar) / 2;
     const cairnX = cover.x + CAIRN_LEFT * (cover.w / SRC_W);
+    const cx = cairnX / 2;
+    const cy = (head + vh - bar) / 2;
     const cw = Math.min(
       CLIP.max,
       2 * (cx - CLIP.edge),
       2 * (cairnX - CLIP.gap - cx),
       2 * (vh - bar - CLIP.edge - cy) * CLIP.aspect,
     );
-    this.clipFits = vw >= 700 && cw >= CLIP.min;
+    this.clipFits = !narrow && cw >= CLIP.min;
     const c = this.clip.style;
     c.width = `${Math.round(cw)}px`;
     c.left = `${Math.round(cx - cw / 2)}px`;
@@ -272,6 +305,9 @@ export class Helper {
     this.open = open;
     this.bubble.classList.toggle('is-open', open);
     this.bubble.inert = !open;
+    const ask = open && this.state === 1;
+    this.form.classList.toggle('is-open', ask);
+    this.form.inert = !ask;
     if (this.state > 0) this.body.setAttribute('aria-expanded', String(open));
     if (open) this.#place();
   }
@@ -321,31 +357,48 @@ export class Helper {
       this.says.replaceChildren(...words(text));
     }
     this.says.scrollTop = 0;
-    this.form.hidden = hint;
     this.bubble.classList.toggle('helper__bubble--hint', hint);
     this.#place();
   }
 
   #place() {
     if (!this.vw) return;
-    let p;
-    let top;
+    const edge = 16;
+    let tip;
     if (this.state <= 0) {
       const g = this.geo.perch;
-      p = { x: this.perchAt.x + g.w / 2 };
-      top = this.perchAt.y - 22;
+      tip = { x: this.perchAt.x + g.w * 0.45, y: this.perchAt.y - 6 };
     } else {
-      p = this.side;
-      top = p.y - this.geo.fly.h / 2 - 22;
+      const g = this.geo.fly;
+      tip = { x: this.side.x - g.w * 0.14, y: this.side.y - g.h / 2 - 6 };
+      const f = this.form.style;
+      const fw = Math.min(ASK.w, this.vw - 2 * edge);
+      f.width = `${Math.round(fw)}px`;
+      f.left = `${Math.round((this.vw - fw) / 2)}px`;
+      f.top = `${Math.round(this.vh - this.bar - ASK.floor - ASK.h)}px`;
     }
-    const edge = 16;
+    const bottom = tip.y - TAIL;
     const b = this.bubble.style;
-    b.setProperty('--room', `${Math.round(Math.max(140, top - this.bar - 12))}px`);
+    b.setProperty('--room', `${Math.round(Math.max(120, bottom - this.head - 12))}px`);
     const w = this.bubble.offsetWidth;
-    const left = Math.max(edge, Math.min(this.vw - edge - w, p.x + 44 - w));
+    const h = this.bubble.offsetHeight;
+    const r = this.bubble.classList.contains('helper__bubble--hint') ? h / 2 : Math.min(BUBBLE_RADIUS, h / 2);
+    const left = Math.max(edge, Math.min(this.vw - edge - w, tip.x - w * 0.7));
     b.left = `${Math.round(left)}px`;
-    b.bottom = `${Math.round(this.vh - top)}px`;
-    b.setProperty('--tail', `${Math.round(Math.max(26, Math.min(w - 26, p.x - left)))}px`);
+    b.bottom = `${Math.round(this.vh - bottom)}px`;
+    const tx = tip.x - left;
+    const half = Math.min(12, (w - 2 * r) / 2 - 2);
+    const bx = Math.max(r + half, Math.min(w - r - half, tx - 6));
+    const H = TAIL + 1;
+    this.tail.setAttribute('width', String(w));
+    this.tail.setAttribute('height', String(H + 1));
+    this.tail.setAttribute('viewBox', `0 -1 ${w} ${H + 1}`);
+    this.tailPath.setAttribute(
+      'd',
+      `M${(bx - half).toFixed(1)} -1 Q${(bx - half * 0.2).toFixed(1)} ${(H * 0.55).toFixed(1)} ${tx.toFixed(1)} ${H} ` +
+        `Q${(bx + half * 0.5).toFixed(1)} ${(H * 0.45).toFixed(1)} ${(bx + half).toFixed(1)} -1 Z`,
+    );
+    b.setProperty('--tail', `${Math.round(tx)}px`);
   }
 
   async #ask(raw) {

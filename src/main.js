@@ -267,7 +267,7 @@ addEventListener(
 addEventListener(
   'touchmove',
   (e) => {
-    if (touchY == null || kofi.open || e.target.closest?.('.helper__bubble')) return;
+    if (touchY == null || kofi.open || e.target.closest?.('[data-no-swipe]')) return;
     const dy = touchY - e.touches[0].clientY;
     if (Math.abs(dy) < 24) return;
     touchY = null;
@@ -376,7 +376,7 @@ function layout() {
   groupMid = (head.offsetHeight + vh - bar) / 2 - vh * 0.015;
   root.style.setProperty('--bar', `${bar}px`);
   cairn.layout(vw, vh, cover, dpr);
-  helper.layout(vw, vh, cover, bar);
+  helper.layout(vw, vh, cover, bar, head.offsetHeight);
   if (word) word.resize(Math.min(vw < 700 ? vw * 0.84 : vw * 0.48, 860), dpr);
 }
 addEventListener('resize', layout);

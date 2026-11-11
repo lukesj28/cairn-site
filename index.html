@@ -38,14 +38,14 @@
           <button type="button" class="perch" aria-label="Scroll down">
             <span class="helper__art is-out"></span>
           </button>
-          <div class="helper__bubble" role="group" aria-label="cairn’s helper" inert>
+          <div class="helper__bubble" data-no-swipe role="group" aria-label="cairn’s helper" inert>
             <p class="helper__asked" hidden></p>
             <p class="helper__say" aria-live="polite"></p>
-            <form class="helper__ask" hidden>
-              <input type="text" name="q" placeholder="ask about cairn" aria-label="Ask a question about cairn" maxlength="500" autocomplete="off" enterkeyhint="send" />
-              <button type="submit" class="helper__send" aria-label="Ask" data-icon="arrow-up"></button>
-            </form>
           </div>
+          <form class="helper__ask" data-no-swipe inert>
+            <input type="text" name="q" placeholder="ask about cairn" aria-label="Ask a question about cairn" maxlength="500" autocomplete="off" enterkeyhint="send" />
+            <button type="submit" class="helper__send" aria-label="Ask" data-icon="arrow-up"></button>
+          </form>
           <figure class="helper__clip" inert hidden>
             <div class="helper__holo">
               <div class="helper__screen">
@@ -56,6 +56,7 @@
                 <button type="button" class="helper__clip-btn helper__clip-full" aria-label="Play video full screen" data-icon="corners-out"></button>
               </div>
             </div>
+            <div class="helper__glints" aria-hidden="true"><i style="left:8%;top:22%;--d:0.45;--s:0.88"></i><i style="left:52%;top:14%;--d:0.51;--s:0.89"></i><i style="left:94%;top:30%;--d:0.63;--s:1.0"></i><i style="left:70%;top:90%;--d:0.09;--s:1.0"></i><i style="left:18%;top:92%;--d:0.98;--s:1.08"></i><i style="left:36%;top:44%;--d:0.16;--s:0.61"></i></div>
           </figure>
         </div>
         <canvas id="cairn" aria-hidden="true"></canvas>
