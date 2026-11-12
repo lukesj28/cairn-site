@@ -119,6 +119,7 @@ function show(v, ms) {
   onScreen = v;
   return new Promise((resolve) => {
     const f = (fade = { done, timer: 0, over: false });
+    let priming = false;
     function done() {
       if (f.over) return;
       f.over = true;
@@ -138,7 +139,7 @@ function show(v, ms) {
       resolve();
     }
     function reveal() {
-      if (f.over || !drawable(v)) return;
+      if (f.over || priming || !drawable(v)) return;
       if (!ms) return done();
       const vOnTop = from.compareDocumentPosition(v) & Node.DOCUMENT_POSITION_FOLLOWING;
       const layer = vOnTop ? v : from;
@@ -152,6 +153,16 @@ function show(v, ms) {
     if (from === v) return done();
     v.addEventListener('seeked', reveal);
     v.addEventListener('loadeddata', reveal);
+    if (v.readyState < 2 && v.paused) {
+      priming = true;
+      const at = v.currentTime;
+      play(v).then(() => {
+        priming = false;
+        v.pause();
+        rewind(v, at);
+        reveal();
+      });
+    }
     reveal();
   });
 }

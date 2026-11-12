@@ -255,8 +255,10 @@ export class Helper {
     const k = NEAR / (NEAR - Math.min(passU, NEAR * 0.99));
     const x = (this.side.x - this.focusX) * (k - 1);
     const g = this.fly;
+    const narrow = this.vw < NARROW;
     const off =
-      this.side.x + x - k * (g.x + g.w / 2) >= this.vw || this.side.y + rideY - k * (g.y + g.h / 2) >= this.vh;
+      this.side.x + x - k * ((narrow ? 0 : g.x) + g.w / 2) >= this.vw ||
+      this.side.y + rideY - k * ((narrow ? 0 : g.y) + g.h / 2) >= this.vh;
     if (off !== this.off) {
       this.off = off;
       this.body.style.display = off ? 'none' : '';
