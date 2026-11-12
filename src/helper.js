@@ -1,4 +1,5 @@
 import { Perch, Flyer } from './fox.js';
+import { track, topicOf } from './analytics.js';
 
 const SRC_W = 1920;
 const SRC_H = 1080;
@@ -133,6 +134,7 @@ export class Helper {
       if (e.target === this.clip && e.propertyName === 'visibility' && !this.clip.classList.contains('is-open')) this.clip.hidden = true;
     });
     this.video.addEventListener('error', () => this.#tutorial(null));
+    this.video.addEventListener('play', () => this.video.controls && track('ai_tutorial_video_played', { video_id: this.clipId, video_title: TUTORIALS[this.clipId] }));
 
     this.state = -1;
     this.side = null;
@@ -142,6 +144,7 @@ export class Helper {
     this.turn = 0;
     this.moving = false;
     this.busy = false;
+    this.sent = false;
     this.said = false;
     this.history = [];
     this.vw = 0;
@@ -157,6 +160,7 @@ export class Helper {
       e.preventDefault();
       this.#ask(this.input.value);
     });
+    this.input.addEventListener('focus', () => track('ai_chat_opened'), { once: true });
   }
 
   layout(vw, vh, cover, bar, head) {
@@ -306,9 +310,11 @@ export class Helper {
         void this.clip.offsetWidth;
       }
       this.clip.classList.add('is-open');
+      track('ai_tutorial_video_rendered', { video_id: id, video_title: TUTORIALS[id] });
       this.clip.inert = false;
       if (!v.controls) v.play().catch(() => {});
     };
+    this.clipId = id;
     v.src = `${CLIPS}/${id}.mp4`;
   }
 
@@ -359,6 +365,11 @@ export class Helper {
   async #ask(raw) {
     const q = raw.trim();
     if (!q || this.busy) return;
+    if (!this.sent) {
+      this.sent = true;
+      track('ai_first_query_sent');
+    }
+    track('ai_query_topic', { topic: topicOf(q) });
     this.busy = true;
     this.input.value = '';
     this.#say({ asked: q, thinking: true });
@@ -366,6 +377,7 @@ export class Helper {
       this.flyer.want = 'think';
     }, THINK_AFTER);
     let text = LINES.lost;
+    let fallback = 'upstream_error';
     let clip = null;
     try {
       const res = await fetch('/api/chat', {
@@ -376,21 +388,26 @@ export class Helper {
       });
       if (res.status === 429) {
         text = LINES.winded;
+        fallback = 'rate_limited';
       } else if (res.status === 503) {
         text = LINES.tired;
+        fallback = 'quota_exhausted';
       } else if (res.ok) {
-        const { reply, video } = await res.json();
+        const { reply, video, source } = await res.json();
         if (typeof reply === 'string' && reply) {
           text = reply;
           clip = video;
+          fallback = source === 'refusal' ? 'unsupported_query' : null;
           this.history = [...this.history, { role: 'user', content: q }, { role: 'assistant', content: reply, video }].slice(-6);
         }
       }
-    } catch {
+    } catch (e) {
+      fallback = e?.name === 'TimeoutError' ? 'model_timeout' : 'network_error';
     } finally {
       this.busy = false;
       clearTimeout(think);
     }
+    if (fallback) track('ai_unanswered_fallback', { fallback_type: fallback });
     this.flyer.want = text === LINES.lost || text === LINES.winded || text === LINES.tired ? 'idle' : 'answer';
     this.#say({ asked: q, text });
     this.#tutorial(this.state === 1 && !this.moving && this.clipFits && Object.hasOwn(TUTORIALS, clip ?? '') ? clip : null);

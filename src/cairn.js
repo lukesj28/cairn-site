@@ -1,4 +1,5 @@
 import { STONES } from './cairn-stones.js';
+import { track } from './analytics.js';
 
 const SRC_W = 1920;
 const DOES = ['read the docs', 'see the source', 'what’s new', 'buy me a coffee'];
@@ -79,6 +80,7 @@ export class Cairn {
     b.addEventListener('blur', () => this.lit === i && !b.matches(':hover') && this.#light(-1));
     b.addEventListener('click', () => {
       if (this.touch && this.lit !== i) return this.#light(i);
+      clearTimeout(this.hoverTimer);
       this.group.dispatchEvent(
         new CustomEvent('stone', { bubbles: true, detail: { index: i, name: STONES[i].name } }),
       );
@@ -101,6 +103,11 @@ export class Cairn {
 
   #light(i) {
     this.lit = this.here ? i : -1;
+    clearTimeout(this.hoverTimer);
+    if (this.lit >= 0) {
+      const stone_id = STONES[this.lit].name;
+      this.hoverTimer = setTimeout(() => track('cairn_stone_hover', { stone_id }), 500);
+    }
     this.stones.forEach((st, j) => st.tag.classList.toggle('is-lit', j === this.lit));
   }
 

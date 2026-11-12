@@ -5,6 +5,7 @@ import './style.css';
 import { CloudWord } from './cloud.js';
 import { Cairn } from './cairn.js';
 import { Helper } from './helper.js';
+import { track } from './analytics.js';
 import arrowUp from '@phosphor-icons/core/bold/arrow-up-bold.svg?raw';
 import cross from '@phosphor-icons/core/bold/x-bold.svg?raw';
 import cornersOut from '@phosphor-icons/core/bold/corners-out-bold.svg?raw';
@@ -95,6 +96,7 @@ const OUT = {
 };
 const kofi = document.getElementById('kofi');
 stones.addEventListener('stone', ({ detail: { name } }) => {
+  track('cairn_stone_clicked', { stone_id: name, destination: name === 'top' ? '/docs' : OUT[name] ?? 'ko-fi' });
   if (name === 'top') return location.assign('/docs');
   if (OUT[name]) return window.open(OUT[name], '_blank', 'noopener');
   if (name !== 'bottom') return;
@@ -187,6 +189,7 @@ function rewind(v, t = 0) {
 }
 
 let state = 0;
+let reachedHelper = false;
 let moving = null;
 
 async function transition(clipIn, fadeIn, next, nextAt, joinMs) {
@@ -226,6 +229,10 @@ async function step(dir) {
   }
 
   state = to;
+  if (state === 1 && !reachedHelper) {
+    reachedHelper = true;
+    track('landing_scroll_depth', { section_reached: 'ai_helper' });
+  }
   signoff.classList.toggle('is-here', state === 2);
   if (state === 2) cairn.enter();
   get.inert = state !== 0;
