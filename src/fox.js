@@ -4,6 +4,7 @@ const FPS = 24;
 const BEAT = 24;
 const FADE_MS = 160;
 const GONE = 56;
+const CLEAR = 35;
 const DIVE_AT = [
   28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 27, 27, 26, 26, 25, 24, 24, 23, 23, 22,
   22, 22, 23, 23, 24, 25, 26, 26, 27, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 27, 27, 26, 25,
@@ -173,6 +174,7 @@ export class Perch extends Clips {
 
   reset() {
     this.diving = false;
+    this.art.parentElement.classList.remove('is-diving');
     this.show(this.calm ? 'idle' : 'jump_up');
     this.hidden = true;
   }
@@ -211,6 +213,8 @@ export class Perch extends Clips {
       this.pause();
       this.hidden = true;
       this.diving = false;
+    } else if (name === 'jump_down' && f >= CLEAR) {
+      this.art.parentElement.classList.add('is-diving');
     }
   }
 }

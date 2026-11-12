@@ -43,11 +43,6 @@ const get = document.getElementById('get');
 const signoff = document.getElementById('signoff');
 const head = document.querySelector('.head');
 const root = document.documentElement;
-const sky = document.createElement('canvas');
-const skyCtx = sky.getContext('2d', { alpha: false });
-const decoders = document.createElement('div');
-decoders.className = 'decoders';
-reel.append(sky, decoders);
 
 const HERO_BASE = 'https://cdn.cairnstacks.app/hero';
 const SOURCES = [
@@ -70,7 +65,7 @@ function clip(name, loop = false) {
     s.type = type;
     v.append(s);
   }
-  decoders.append(v);
+  reel.append(v);
   return v;
 }
 
@@ -108,7 +103,7 @@ kofi.querySelector('.kofi__close').addEventListener('click', () => kofi.close())
 kofi.addEventListener('click', (e) => e.target === kofi && kofi.close());
 
 const poster = new Image();
-poster.src = `${HERO_BASE}/poster.webp`;
+poster.src = t1Fwd.poster = `${HERO_BASE}/poster.webp`;
 poster.decode?.().then(() => document.documentElement.classList.add('ready'), () => {});
 t1Fwd.addEventListener('loadeddata', () => document.documentElement.classList.add('ready'), { once: true });
 
@@ -116,57 +111,49 @@ const drawable = (v) => v.readyState >= 2 && !v.seeking;
 
 let onScreen = t1Fwd;
 let fade = null;
-let drawnOf = null;
-let drawnAt = 0;
+t1Fwd.style.opacity = '1';
 
 function show(v, ms) {
   if (fade) fade.done();
   const from = onScreen;
   onScreen = v;
   return new Promise((resolve) => {
-    const done = () => {
-      if (fade?.to === v) fade = null;
-      if (onScreen === v) for (const c of clips) if (c !== v && !c.paused) c.pause();
+    const f = (fade = { done, timer: 0, over: false });
+    function done() {
+      if (f.over) return;
+      f.over = true;
+      clearTimeout(f.timer);
+      v.removeEventListener('seeked', reveal);
+      v.removeEventListener('loadeddata', reveal);
+      if (fade === f) fade = null;
+      v.style.transition = from.style.transition = '';
+      v.style.opacity = '1';
+      if (onScreen === v) {
+        for (const c of clips) {
+          if (c === v) continue;
+          c.style.opacity = '0';
+          if (!c.paused) c.pause();
+        }
+      }
       resolve();
-    };
-    if (!ms || from === v) {
-      fade = null;
-      done();
-    } else {
-      fade = { from, to: v, ms, t0: null, done };
     }
+    function reveal() {
+      if (f.over || !drawable(v)) return;
+      if (!ms) return done();
+      const vOnTop = from.compareDocumentPosition(v) & Node.DOCUMENT_POSITION_FOLLOWING;
+      const layer = vOnTop ? v : from;
+      v.style.opacity = vOnTop ? '0' : '1';
+      void getComputedStyle(layer).opacity;
+      layer.style.transition = `opacity ${ms}ms cubic-bezier(0.45, 0, 0.55, 1)`;
+      layer.style.opacity = vOnTop ? '1' : '0';
+      layer.addEventListener('transitionend', done, { once: true });
+      f.timer = setTimeout(done, ms + 100);
+    }
+    if (from === v) return done();
+    v.addEventListener('seeked', reveal);
+    v.addEventListener('loadeddata', reveal);
+    reveal();
   });
-}
-
-function paint(now) {
-  const { x, y, w, h } = cover;
-  skyCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  skyCtx.globalAlpha = 1;
-  if (fade) {
-    const f = fade;
-    if (f.t0 == null && drawable(f.to)) f.t0 = now;
-    const a = f.t0 == null ? 0 : Math.min(1, (now - f.t0) / f.ms);
-    if (drawable(f.from) || a === 0) paintFrame(f.from, x, y, w, h);
-    if (a > 0) {
-      skyCtx.globalAlpha = a < 0.5 ? 2 * a * a : 1 - 2 * (1 - a) * (1 - a);
-      paintFrame(f.to, x, y, w, h);
-      skyCtx.globalAlpha = 1;
-    }
-    if (a >= 1) f.done();
-    drawnOf = null;
-    return;
-  }
-  const v = onScreen;
-  if (v.readyState < 2) return paintFrame(v, x, y, w, h);
-  if (v.seeking || (v === drawnOf && v.currentTime === drawnAt)) return;
-  paintFrame(v, x, y, w, h);
-  drawnOf = v;
-  drawnAt = v.currentTime;
-}
-
-function paintFrame(v, x, y, w, h) {
-  if (v.readyState >= 2) skyCtx.drawImage(v, x, y, w, h);
-  else if (v === t1Fwd && poster.complete && poster.naturalWidth) skyCtx.drawImage(poster, x, y, w, h);
 }
 
 function play(v) {
@@ -380,9 +367,6 @@ function layout() {
   vw = innerWidth;
   vh = innerHeight;
   dpr = Math.min(devicePixelRatio || 1, 2);
-  sky.width = Math.round(vw * dpr);
-  sky.height = Math.round(vh * dpr);
-  drawnOf = null;
   coverH = Math.max(vh, vw * SRC_ASPECT);
   const coverW = coverH / SRC_ASPECT;
   cover = { x: (vw - coverW) / 2, y: (vh - coverH) / 2, w: coverW, h: coverH };
@@ -405,7 +389,6 @@ let lastWordKey = '';
 function tick(now) {
   const dt = Math.min(0.1, (now - last) / 1000);
   last = now;
-  paint(now);
   cairn.paint(dt);
   helper.carry((PAN[TILT - 1] - panAt(tiltFrame())) * coverH, pushAt());
 
