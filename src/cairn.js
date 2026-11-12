@@ -125,7 +125,7 @@ export class Cairn {
     this.canvas.width = Math.round(vw * dpr);
     this.canvas.height = Math.round(vh * dpr);
     const s = cover.w / SRC_W;
-    const sd = s * dpr;
+    const words = this.stones.map((st) => st.tag.lastElementChild.offsetWidth);
     this.stones.forEach((st, i) => {
       const { x, y, w, h } = st.box;
       const b = st.button.style;
@@ -134,16 +134,15 @@ export class Cairn {
       b.width = `${(w * s).toFixed(2)}px`;
       b.height = `${(h * s).toFixed(2)}px`;
       b.clipPath = `path('${path(st.points, x, y, s)}')`;
-      this.#place(st, vw, s);
-      this.#sprite(st, i, sd);
+      this.#place(st, vw, s, words[i]);
+      st.sprite = null;
     });
     this.dirty = true;
   }
 
-  #place(st, vw, s) {
+  #place(st, vw, s, words) {
     const { cover } = this;
     const scanned = !LANDS[st.name];
-    const words = st.tag.lastElementChild.offsetWidth;
     const flankX = cover.x + st.lands[0] * s + (scanned ? LEAD.inset : 0);
     const over = flankX - REACH - words < LEAD.edge;
     const midX = cover.x + (st.box.x + st.box.w / 2) * s;
@@ -181,6 +180,7 @@ export class Cairn {
       const st = this.stones[i];
       if (st.level <= 0) continue;
       ctx.globalAlpha = st.level;
+      if (!st.sprite) this.#sprite(st, i, s);
       ctx.drawImage(
         st.sprite,
         Math.round(cover.x * dpr + st.box.x * s - st.pad),

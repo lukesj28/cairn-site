@@ -84,6 +84,7 @@ class Clips {
 
   set hidden(on) {
     this.art.classList.toggle('is-out', on);
+    this.art.parentElement.inert = on;
   }
   get hidden() {
     return this.art.classList.contains('is-out');

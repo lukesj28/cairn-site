@@ -3,7 +3,6 @@ import { Perch, Flyer } from './fox.js';
 const SRC_W = 1920;
 const SRC_H = 1080;
 const ARRIVE_MS = 2100;
-const JUMP_MS = 1400;
 const THINK_AFTER = 700;
 const NEAR = 0.55;
 const LEDGE = 668 / 726;
@@ -16,14 +15,13 @@ const CAIRN_TOP = 555;
 const ASK = { w: 340, h: 52, floor: 28 };
 const TAIL = 20;
 const BUBBLE_RADIUS = 26;
+const EDGE = 16;
 const SVG = 'http://www.w3.org/2000/svg';
 const NARROW = 700;
 const README = 'https://github.com/lukesj28/cairn';
 const LINES = {
-  scroll: 'psst, there’s more. scroll down.',
-  swipe: 'psst, there’s more. swipe up.',
-  intro: 'hi! I answer questions about cairn. ask me anything, or scroll down to the cairn to explore on your own.',
-  introTouch: 'hi! I answer questions about cairn. ask me anything, or swipe up to the cairn to explore on your own.',
+  intro: 'hi! I’m an AI helper for cairn. ask me anything, or scroll down to the cairn to explore on your own.',
+  introTouch: 'hi! I’m an AI helper for cairn. ask me anything, or swipe up to the cairn to explore on your own.',
   winded: 'phew, my wings need a rest. give me a minute, then ask again.',
   lost: `I dropped my notes mid-flight. try again, or the README has it all: ${README}`,
   tired: 'I’ve answered all I can for today. the docs have everything: https://cairnstacks.app/docs',
@@ -46,8 +44,7 @@ function isAllowedUrl(urlStr) {
   try {
     const u = new URL(urlStr);
     if (u.protocol !== 'https:') return false;
-    const host = u.hostname.toLowerCase();
-    return ALLOWED_HOSTS.has(host) || Array.from(ALLOWED_HOSTS).some((h) => host.endsWith(`.${h}`));
+    return ALLOWED_HOSTS.has(u.hostname.toLowerCase());
   } catch {
     return false;
   }
@@ -138,24 +135,20 @@ export class Helper {
     this.video.addEventListener('error', () => this.#tutorial(null));
 
     this.state = -1;
-    this.geo = {};
     this.side = null;
     this.focusX = 0;
     this.carried = '';
     this.off = false;
     this.turn = 0;
     this.moving = false;
-    this.open = false;
     this.busy = false;
-    this.hinted = false;
-    this.greeted = false;
-    this.line = null;
+    this.said = false;
     this.history = [];
     this.vw = 0;
     this.vh = 0;
 
     this.body.addEventListener('click', () => {
-      if (!this.moving && this.state === 1) this.#toggle(!this.open);
+      if (!this.moving && this.state === 1) this.input.focus({ preventScroll: true });
     });
     this.perchEl.addEventListener('click', () => {
       if (!this.moving && this.state === 0) this.step(1);
@@ -163,11 +156,6 @@ export class Helper {
     this.form.addEventListener('submit', (e) => {
       e.preventDefault();
       this.#ask(this.input.value);
-    });
-    root.addEventListener('keydown', (e) => {
-      if (e.key !== 'Escape' || !this.open) return;
-      this.#toggle(false);
-      this.body.focus({ preventScroll: true });
     });
   }
 
@@ -178,14 +166,12 @@ export class Helper {
     const narrow = vw < NARROW;
     const k = cover.h / SRC_H;
     const g1 = frameGeo(FRAME.perch, Math.min(k, ((narrow ? 0.8 : 0.5) * vw) / FRAME.perch.w));
-    this.geo.perch = g1;
-    this.perchAt = { x: vw + 2 - g1.fw + g1.x, y: vh - bar - LEDGE * g1.fh + g1.y };
     this.#size(this.perchEl, g1);
     const pe = this.perchEl.style;
-    pe.setProperty('--x', `${this.perchAt.x.toFixed(1)}px`);
-    pe.setProperty('--y', `${this.perchAt.y.toFixed(1)}px`);
+    pe.setProperty('--x', `${(vw + 2 - g1.fw + g1.x).toFixed(1)}px`);
+    pe.setProperty('--y', `${(vh - bar - LEDGE * g1.fh + g1.y).toFixed(1)}px`);
     const g2 = frameGeo(FRAME.fly, Math.min(FLY.scale * k, ((narrow ? 0.6 : 0.75) * vw) / FRAME.fly.w));
-    this.geo.fly = g2;
+    this.fly = g2;
     this.#size(this.body, g2);
     const wingR = (g2.fw - g2.x - g2.w / 2) * 0.85;
     const sx = Math.min(cover.x + FLY.x * (cover.w / SRC_W), vw - 8 - wingR);
@@ -199,7 +185,11 @@ export class Helper {
     bs.setProperty('--y', `${sy.toFixed(1)}px`);
     this.focusX = cover.x + cover.w / 2;
     this.carried = '';
-    this.bar = bar;
+    const f = this.form.style;
+    const fw = Math.min(ASK.w, vw - 2 * EDGE);
+    f.width = `${Math.round(fw)}px`;
+    f.left = `${Math.round((vw - fw) / 2)}px`;
+    f.top = `${Math.round(vh - bar - ASK.floor - ASK.h)}px`;
     const cairnX = cover.x + CAIRN_LEFT * (cover.w / SRC_W);
     const cx = cairnX / 2;
     const cy = (head + vh - bar) / 2;
@@ -221,7 +211,7 @@ export class Helper {
   leave(from, to) {
     this.turn++;
     this.moving = true;
-    this.#toggle(false);
+    this.#show(false);
     this.flyer.want = 'idle';
     if (from === 0) {
       this.perch.dive();
@@ -238,7 +228,6 @@ export class Helper {
     const first = this.state < 0;
     this.state = state;
     this.moving = false;
-    this.body.setAttribute('aria-expanded', String(this.open));
 
     if (state === 0) {
       this.flyer.end();
@@ -248,21 +237,12 @@ export class Helper {
         this.perch.jumpUp();
         this.flyer.warm();
       });
-      this.#after(wait + JUMP_MS, () => {
-        if (this.hinted) return;
-        this.hinted = true;
-        this.#toggle(true);
-      });
     } else if (state === 2) {
       this.flyer.end();
     } else if (state === 1) {
       this.flyer.start();
       this.flyer.want = 'answer';
-      this.#after(800, () => {
-        if (this.greeted) return;
-        this.greeted = true;
-        this.#toggle(true);
-      });
+      this.#after(800, () => this.#show(true));
     }
   }
 
@@ -270,7 +250,7 @@ export class Helper {
     if (!this.side) return;
     const k = NEAR / (NEAR - Math.min(passU, NEAR * 0.99));
     const x = (this.side.x - this.focusX) * (k - 1);
-    const g = this.geo.fly;
+    const g = this.fly;
     const off =
       this.side.x + x - k * (g.x + g.w / 2) >= this.vw || this.side.y + rideY - k * (g.y + g.h / 2) >= this.vh;
     if (off !== this.off) {
@@ -299,17 +279,14 @@ export class Helper {
     setTimeout(() => turn === this.turn && fn(), this.reduceMotion.matches ? Math.min(ms, 60) : ms);
   }
 
-  #toggle(open) {
-    if (!open) this.#tutorial(null);
-    if (open && (!this.line || this.line.greeting)) this.#say({});
-    this.open = open;
-    this.bubble.classList.toggle('is-open', open);
-    this.bubble.inert = !open;
-    const ask = open && this.state === 1;
-    this.form.classList.toggle('is-open', ask);
-    this.form.inert = !ask;
-    if (this.state > 0) this.body.setAttribute('aria-expanded', String(open));
-    if (open) this.#place();
+  #show(on) {
+    if (!on) this.#tutorial(null);
+    for (const el of [this.bubble, this.form]) {
+      el.classList.toggle('is-open', on);
+      el.inert = !on;
+    }
+    if (on && !this.said) this.#say({});
+    else if (on) this.#place();
   }
 
   #tutorial(id) {
@@ -336,18 +313,9 @@ export class Helper {
   }
 
   #say({ text, asked = '', thinking = false }) {
-    let hint = false;
     const greeting = text == null && !thinking;
-    const touch = matchMedia('(pointer: coarse)').matches;
-    if (greeting) {
-      if (this.state === 0) {
-        hint = true;
-        text = touch ? LINES.swipe : LINES.scroll;
-      } else {
-        text = touch ? LINES.introTouch : LINES.intro;
-      }
-    }
-    this.line = { greeting };
+    if (greeting) text = matchMedia('(pointer: coarse)').matches ? LINES.introTouch : LINES.intro;
+    this.said = !greeting;
     this.asked.hidden = !asked;
     this.asked.textContent = asked;
     if (thinking) {
@@ -357,33 +325,20 @@ export class Helper {
       this.says.replaceChildren(...words(text));
     }
     this.says.scrollTop = 0;
-    this.bubble.classList.toggle('helper__bubble--hint', hint);
     this.#place();
   }
 
   #place() {
-    if (!this.vw) return;
-    const edge = 16;
-    let tip;
-    if (this.state <= 0) {
-      const g = this.geo.perch;
-      tip = { x: this.perchAt.x + g.w * 0.45, y: this.perchAt.y - 6 };
-    } else {
-      const g = this.geo.fly;
-      tip = { x: this.side.x - g.w * 0.14, y: this.side.y - g.h / 2 - 6 };
-      const f = this.form.style;
-      const fw = Math.min(ASK.w, this.vw - 2 * edge);
-      f.width = `${Math.round(fw)}px`;
-      f.left = `${Math.round((this.vw - fw) / 2)}px`;
-      f.top = `${Math.round(this.vh - this.bar - ASK.floor - ASK.h)}px`;
-    }
+    if (!this.vw || !this.side) return;
+    const g = this.fly;
+    const tip = { x: this.side.x - g.w * 0.14, y: this.side.y - g.h / 2 - 6 };
     const bottom = tip.y - TAIL;
     const b = this.bubble.style;
     b.setProperty('--room', `${Math.round(Math.max(120, bottom - this.head - 12))}px`);
     const w = this.bubble.offsetWidth;
     const h = this.bubble.offsetHeight;
-    const r = this.bubble.classList.contains('helper__bubble--hint') ? h / 2 : Math.min(BUBBLE_RADIUS, h / 2);
-    const left = Math.max(edge, Math.min(this.vw - edge - w, tip.x - w * 0.7));
+    const r = Math.min(BUBBLE_RADIUS, h / 2);
+    const left = Math.max(EDGE, Math.min(this.vw - EDGE - w, tip.x - w * 0.7));
     b.left = `${Math.round(left)}px`;
     b.bottom = `${Math.round(this.vh - bottom)}px`;
     const tx = tip.x - left;
@@ -438,6 +393,6 @@ export class Helper {
     }
     this.flyer.want = text === LINES.lost || text === LINES.winded || text === LINES.tired ? 'idle' : 'answer';
     this.#say({ asked: q, text });
-    this.#tutorial(this.state === 1 && !this.moving && this.open && this.clipFits && Object.hasOwn(TUTORIALS, clip ?? '') ? clip : null);
+    this.#tutorial(this.state === 1 && !this.moving && this.clipFits && Object.hasOwn(TUTORIALS, clip ?? '') ? clip : null);
   }
 }

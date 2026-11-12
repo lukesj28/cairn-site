@@ -1,22 +1,22 @@
-import '@fontsource/fredoka/500.css';
-import '@fontsource/fredoka/600.css';
-import '@fontsource/fredoka/700.css';
+import '@fontsource/fredoka/latin-500.css';
+import '@fontsource/fredoka/latin-600.css';
+import '@fontsource/fredoka/latin-700.css';
 import './style.css';
 import { CloudWord } from './cloud.js';
 import { Cairn } from './cairn.js';
 import { Helper } from './helper.js';
-import appleLogo from './icons/apple.svg?raw';
 import arrowUp from '@phosphor-icons/core/bold/arrow-up-bold.svg?raw';
 import cross from '@phosphor-icons/core/bold/x-bold.svg?raw';
 import cornersOut from '@phosphor-icons/core/bold/corners-out-bold.svg?raw';
 
-for (const [name, svg] of [['apple', appleLogo], ['arrow-up', arrowUp], ['x', cross], ['corners-out', cornersOut]]) {
+for (const [name, svg] of [['arrow-up', arrowUp], ['x', cross], ['corners-out', cornersOut]]) {
   for (const el of document.querySelectorAll(`[data-icon="${name}"]`)) el.innerHTML = svg;
 }
 
 const FPS = 24;
 const SRC_ASPECT = 1080 / 1920;
 const TILT = 72;
+const HORIZON_Y = 389;
 const PAN = [
   0, 0.0019, 0.0052, 0.0094, 0.0149, 0.0217, 0.0293, 0.0382, 0.0478, 0.0587, 0.0703, 0.083, 0.0964,
   0.1109, 0.1259, 0.1419, 0.1585, 0.1758, 0.1939, 0.2125, 0.2316, 0.2515, 0.2718, 0.2924, 0.3135,
@@ -61,7 +61,7 @@ function clip(name, loop = false) {
   v.defaultMuted = true;
   v.playsInline = true;
   v.loop = loop;
-  v.preload = 'auto';
+  v.preload = loop || name === 't1-fwd' ? 'auto' : 'metadata';
   v.disablePictureInPicture = true;
   for (const [ext, type] of SOURCES) {
     const s = document.createElement('source');
@@ -114,6 +114,8 @@ const drawable = (v) => v.readyState >= 2 && !v.seeking;
 
 let onScreen = t1Fwd;
 let fade = null;
+let drawnOf = null;
+let drawnAt = 0;
 
 function show(v, ms) {
   if (fade) fade.done();
@@ -149,9 +151,15 @@ function paint(now) {
       skyCtx.globalAlpha = 1;
     }
     if (a >= 1) f.done();
+    drawnOf = null;
     return;
   }
-  if (drawable(onScreen) || onScreen.readyState < 2) paintFrame(onScreen, x, y, w, h);
+  const v = onScreen;
+  if (v.readyState < 2) return paintFrame(v, x, y, w, h);
+  if (v.seeking || (v === drawnOf && v.currentTime === drawnAt)) return;
+  paintFrame(v, x, y, w, h);
+  drawnOf = v;
+  drawnAt = v.currentTime;
 }
 
 function paintFrame(v, x, y, w, h) {
@@ -160,9 +168,7 @@ function paintFrame(v, x, y, w, h) {
 }
 
 function play(v) {
-  return v.play().catch(() => {
-    if (!v.loop && Number.isFinite(v.duration)) v.currentTime = v.duration;
-  });
+  return v.play().then(() => true, () => false);
 }
 
 function untilEnded(v) {
@@ -184,12 +190,12 @@ let state = 0;
 let moving = null;
 
 async function transition(clipIn, fadeIn, next, nextAt, joinMs) {
+  clipIn.preload = 'auto';
   moving = clipIn;
   rewind(clipIn);
   await show(clipIn, fadeIn);
   rewind(next, nextAt);
-  await play(clipIn);
-  await untilEnded(clipIn);
+  if (await play(clipIn)) await untilEnded(clipIn);
   if (next.loop && !reduceMotion.matches) play(next);
   await show(next, joinMs);
   rewind(clipIn);
@@ -230,6 +236,12 @@ async function step(dir) {
 async function goTo(n) {
   while (state !== n) if (!(await step(Math.sign(n - state)))) return;
 }
+
+document.addEventListener('visibilitychange', () => {
+  if (!onScreen.loop) return;
+  if (document.hidden) onScreen.pause();
+  else if (!reduceMotion.matches && !moving) play(onScreen);
+});
 
 let wheelSum = 0;
 let wheelSpent = false;
@@ -289,11 +301,6 @@ addEventListener('keydown', (e) => {
   if (!dir) return;
   e.preventDefault();
   if (!e.repeat) step(dir);
-});
-
-document.getElementById('back-up').addEventListener('click', async () => {
-  await goTo(0);
-  get.querySelector('a')?.focus({ preventScroll: true, focusVisible: false });
 });
 
 for (const el of head.querySelectorAll('.head__brand, #to-get')) {
@@ -368,15 +375,18 @@ function layout() {
   dpr = Math.min(devicePixelRatio || 1, 2);
   sky.width = Math.round(vw * dpr);
   sky.height = Math.round(vh * dpr);
+  drawnOf = null;
   coverH = Math.max(vh, vw * SRC_ASPECT);
   const coverW = coverH / SRC_ASPECT;
   cover = { x: (vw - coverW) / 2, y: (vh - coverH) / 2, w: coverW, h: coverH };
   getH = get.offsetHeight;
   const bar = snap(Math.min(28, Math.max(14, vh * 0.025)));
-  groupMid = (head.offsetHeight + vh - bar) / 2 - vh * 0.015;
+  const headH = head.offsetHeight;
+  groupMid = (headH + vh - bar) / 2 - vh * 0.015;
   root.style.setProperty('--bar', `${bar}px`);
+  root.style.setProperty('--sky-mid', `${Math.round((headH + cover.y + (HORIZON_Y / 1080) * coverH) / 2)}px`);
   cairn.layout(vw, vh, cover, dpr);
-  helper.layout(vw, vh, cover, bar, head.offsetHeight);
+  helper.layout(vw, vh, cover, bar, headH);
   if (word) word.resize(Math.min(vw < 700 ? vw * 0.84 : vw * 0.48, 860), dpr);
 }
 addEventListener('resize', layout);

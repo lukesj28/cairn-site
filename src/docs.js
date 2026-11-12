@@ -1,14 +1,13 @@
 import '@fontsource/fredoka/latin-500.css';
 import '@fontsource/fredoka/latin-600.css';
 import './docs.css';
-import appleLogo from './icons/apple.svg?raw';
 import github from '@phosphor-icons/core/bold/github-logo-bold.svg?raw';
 import caretDown from '@phosphor-icons/core/bold/caret-down-bold.svg?raw';
 import link from '@phosphor-icons/core/bold/link-bold.svg?raw';
 import copy from '@phosphor-icons/core/bold/copy-bold.svg?raw';
 import check from '@phosphor-icons/core/bold/check-bold.svg?raw';
 
-const ICONS = { apple: appleLogo, github, 'caret-down': caretDown, link, copy, check };
+const ICONS = { github, 'caret-down': caretDown, link, copy, check };
 const icon = (el, name) => (el.innerHTML = ICONS[name]);
 for (const el of document.querySelectorAll('[data-icon]')) icon(el, el.dataset.icon);
 

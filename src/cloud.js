@@ -250,7 +250,7 @@ export class CloudWord {
     this.xHeight = (this.baseY - this.massTop);
     this.canvas.style.width = `${this.cssW}px`;
     this.canvas.style.height = `${this.cssH}px`;
-    const over = Math.max(1, Math.min(OVERSAMPLE, Math.sqrt(MAX_PIXELS / (pw * ph))));
+    const over = Math.max(1, Math.min(dpr >= 2 ? 1 : OVERSAMPLE, Math.sqrt(MAX_PIXELS / (pw * ph))));
     const cw = Math.round(pw * over), ch = Math.round(ph * over);
     if (this.canvas.width !== cw) this.canvas.width = cw;
     if (this.canvas.height !== ch) this.canvas.height = ch;
@@ -329,9 +329,5 @@ export class CloudWord {
     ctx.fillStyle = g;
     ctx.fillRect(-this.M, -this.M, this.mask.w + this.M * 2, h + this.M * 2);
     ctx.globalCompositeOperation = 'source-over';
-  }
-
-  settled(t) {
-    return t > 4.2;
   }
 }

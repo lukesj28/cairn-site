@@ -27,7 +27,7 @@ const embed = async (env, input) => {
   return out.flatMap((o) => o.data)
 }
 
-const stored = async (env, input) => {
+const stored = async (env, ctx, input) => {
   const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(input)))
   const key = `${EMBED}:${[...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, '0')).join('')}`
   const hit = await env.EMB_CACHE.get(key, 'arrayBuffer').catch(() => null)
@@ -37,7 +37,7 @@ const stored = async (env, input) => {
     return input.map((_, i) => flat.subarray(i * dim, (i + 1) * dim))
   }
   const vecs = await embed(env, input)
-  await env.EMB_CACHE.put(key, new Float32Array(vecs.flat()).buffer, { expirationTtl: 60 * 60 * 24 * 30 }).catch(() => {})
+  ctx.waitUntil(env.EMB_CACHE.put(key, new Float32Array(vecs.flat()).buffer, { expirationTtl: 60 * 60 * 24 * 30 }).catch(() => {}))
   return vecs
 }
 
@@ -115,6 +115,7 @@ const SECURITY_HEADERS = {
   'X-Frame-Options': 'DENY',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none'",
+  'Cache-Control': 'no-store',
 }
 
 const json = (data, init = {}) =>
@@ -159,8 +160,17 @@ function isAllowedOrigin(request) {
   return true
 }
 
-async function chat(request, env) {
-  const ip = request.headers.get('cf-connecting-ip') ?? 'anon'
+const rateKey = (ip) => {
+  if (!ip.includes(':')) return ip
+  const v4 = ip.match(/^::ffff:([\d.]+)$/i)
+  if (v4) return v4[1]
+  const [head, tail] = ip.split('::').map((s) => (s ? s.split(':') : []))
+  const all = tail ? [...head, ...Array(Math.max(0, 8 - head.length - tail.length)).fill('0'), ...tail] : head
+  return all.slice(0, 4).map((g) => parseInt(g, 16).toString(16)).join(':')
+}
+
+async function chat(request, env, ctx) {
+  const ip = rateKey(request.headers.get('cf-connecting-ip') ?? 'anon')
   if (!(await env.CHAT_LIMIT.limit({ key: ip })).success) return limited()
 
   const clHeader = request.headers.get('content-length')
@@ -200,10 +210,15 @@ async function chat(request, env) {
   if (!/\p{L}{2}/u.test(message)) return json({ source: 'refusal', reply: REFUSAL })
 
   try {
-    refs ??= stored(env, texts).catch((err) => {
+    refs ??= stored(env, ctx, texts).catch((err) => {
       refs = null
       throw err
     })
+    const docs = (docRefs ??= stored(env, ctx, DOC_CHUNKS).catch((err) => {
+      docRefs = null
+      throw err
+    }))
+    docs.catch(() => {})
     const recentContext = history.slice(-2).map((h) => h.content).join('\n')
     const queryText = recentContext ? `${recentContext}\n${message}` : message
     const inputs = history.length ? [message, queryText] : [message]
@@ -218,11 +233,7 @@ async function chat(request, env) {
     }
 
     if (!(await env.LLM_LIMIT.limit({ key: ip })).success) return limited()
-    docRefs ??= stored(env, DOC_CHUNKS).catch((err) => {
-      docRefs = null
-      throw err
-    })
-    const excerpts = (await docRefs)
+    const excerpts = (await docs)
       .map((v, i) => [cos(queryVec, v), i])
       .sort((a, b) => b[0] - a[0])
       .slice(0, DOC_TOP_K)
@@ -261,12 +272,12 @@ async function chat(request, env) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const { pathname } = new URL(request.url)
     if (pathname === '/api/chat') {
       if (request.method !== 'POST') return text('Method not allowed', 405)
       if (!isAllowedOrigin(request)) return text('Forbidden', 403)
-      return chat(request, env)
+      return chat(request, env, ctx)
     }
     return text('Not found', 404)
   },
