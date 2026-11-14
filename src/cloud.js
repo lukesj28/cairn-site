@@ -16,7 +16,7 @@ function mulberry32(seed) {
 const easeOutExpo = (x) => (x >= 1 ? 1 : 1 - Math.pow(2, -10 * x));
 const clamp01 = (x) => (x < 0 ? 0 : x > 1 ? 1 : x);
 
-function makeSprite(rand, top, bottom, lobes, core = 0.5) {
+function makeSprite(rand, top, bottom, lobes, core = 0.5, crisp = false) {
   const S = 256;
   const c = document.createElement('canvas');
   c.width = c.height = S;
@@ -26,8 +26,15 @@ function makeSprite(rand, top, bottom, lobes, core = 0.5) {
   const blob = (x, y, r, a) => {
     const rg = g.createRadialGradient(x, y, 0, x, y, r);
     rg.addColorStop(0, `rgba(0,0,0,${a})`);
-    if (core > 0) rg.addColorStop(core, `rgba(0,0,0,${a})`);
-    rg.addColorStop(Math.min(1, core + (1 - core) * 0.55), `rgba(0,0,0,${a * 0.35})`);
+    if (crisp) {
+      rg.addColorStop(0.3, `rgba(0,0,0,${a})`);
+      rg.addColorStop(0.5, `rgba(0,0,0,${a * 0.72})`);
+      rg.addColorStop(0.66, `rgba(0,0,0,${a * 0.26})`);
+      rg.addColorStop(0.84, `rgba(0,0,0,${a * 0.06})`);
+    } else {
+      if (core > 0) rg.addColorStop(core, `rgba(0,0,0,${a})`);
+      rg.addColorStop(Math.min(1, core + (1 - core) * 0.55), `rgba(0,0,0,${a * 0.35})`);
+    }
     rg.addColorStop(1, 'rgba(0,0,0,0)');
     g.fillStyle = rg;
     g.beginPath();
@@ -215,7 +222,7 @@ export class CloudWord {
     this.puffs = buildPuffs(this.mask, rand);
     this.body = [], this.vapour = [];
     for (let i = 0; i < 6; i++) {
-      this.body.push(makeSprite(rand, '#ffffff', '#9ab3d8', 4, 0.22));
+      this.body.push(makeSprite(rand, '#ffffff', '#9ab3d8', 4, 0.22, true));
       this.vapour.push(makeSprite(rand, '#ffffff', '#d6e4f6', 9, 0));
     }
     this.aspect = this.mask.h / this.mask.w;

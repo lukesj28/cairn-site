@@ -28,7 +28,7 @@ export const FAQ = [
   },
   {
     q: ['How do I download cairn?', 'How do I install cairn?', 'Where can I get cairn?', 'Download link', 'How do I install it?', 'Installation instructions', 'Where is the dmg?', 'How do I get it?', 'Where do I download the app?', 'How do I install it on my Mac?'],
-    a: `Download ${GH}/releases/latest/download/Cairn.dmg (or use the Download for Mac button), open it and drag Cairn into Applications. Launch it from there and grant Accessibility access when asked.`,
+    a: `Download ${GH}/releases/latest/download/Cairn.dmg (or use the download for mac button), open it and drag Cairn into Applications. Launch it from there and grant Accessibility access when asked.`,
     video: 'install',
   },
   {
