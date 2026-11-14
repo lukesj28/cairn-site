@@ -7,22 +7,50 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <script defer src="https://cloud.umami.is/script.js" data-website-id="d0187b34-49ab-498e-93b8-8c9a0388b030" data-domains="cairnstacks.app"></script>
-    <title>Cairn | Save and Restore Your Mac Window Layouts</title>
+    <title>Cairn | Free Mac Window Manager to Save and Restore Layouts</title>
     <meta
       name="description"
-      content="Cairn is a free, open source macOS menu bar app that saves your window layouts as stacks and puts them back with one click."
+      content="Cairn is a free, open source Mac window manager app in your menu bar. Save your window layouts as stacks and restore them with one click."
     />
     <link rel="canonical" href="https://cairnstacks.app/" />
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "name": "Cairn",
+          "alternateName": ["Cairn Stacks", "cairnstacks.app"],
+          "url": "https://cairnstacks.app/"
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "Cairn",
+          "alternateName": "Cairn Stacks",
+          "description": "Free, open source Mac window manager app that saves your window layouts as stacks and restores them with one click from the menu bar.",
+          "applicationCategory": "UtilitiesApplication",
+          "operatingSystem": "macOS 12 or later",
+          "url": "https://cairnstacks.app/",
+          "downloadUrl": "https://github.com/lukesj28/cairn/releases/latest/download/Cairn.dmg",
+          "image": "https://cairnstacks.app/og.png",
+          "license": "https://github.com/lukesj28/cairn/blob/main/LICENSE",
+          "sameAs": ["https://github.com/lukesj28/cairn"],
+          "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+        }
+      ]
+    }
+    </script>
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Cairn | Save and Restore Your Mac Window Layouts" />
+    <meta property="og:title" content="Cairn | Free Mac Window Manager to Save and Restore Layouts" />
     <meta
       property="og:description"
-      content="Cairn is a free, open source macOS menu bar app that saves your window layouts as stacks and puts them back with one click."
+      content="Cairn is a free, open source Mac window manager app in your menu bar. Save your window layouts as stacks and restore them with one click."
     />
     <meta property="og:url" content="https://cairnstacks.app/" />
     <meta property="og:image" content="https://cairnstacks.app/og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="The word cairn written in clouds on a blue sky above a Download for Mac button, with a small winged fox." />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="preload" as="image" href="https://cdn.cairnstacks.app/hero/poster.webp" />
   </head>
@@ -48,7 +76,6 @@
     <main class="journey">
       <div class="stage">
         <div id="reel" class="reel" aria-hidden="true"></div>
-        <h1 class="visually-hidden">cairn</h1>
         <div id="helper" class="helper">
           <button type="button" class="helper__body" aria-label="Ask about cairn" inert>
             <span class="helper__art is-out"></span>
@@ -83,6 +110,7 @@
         <canvas id="word" aria-hidden="true"></canvas>
 
         <div id="get" class="get">
+          <h1 class="get__line"><span class="visually-hidden">cairn, </span>the mac window manager that remembers your layouts</h1>
           <a
             class="pill pill--hero"
             href="https://github.com/lukesj28/cairn/releases/latest/download/Cairn.dmg"

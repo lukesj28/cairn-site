@@ -413,7 +413,7 @@ function tick(now) {
     const visible = spread < 1 && rise < vh * 0.5 + word.cssH * 0.5;
     wordCanvas.style.visibility = visible ? 'visible' : 'hidden';
 
-    const gap = Math.min(80, Math.max(40, word.xHeight * 0.58));
+    const gap = Math.min(44, Math.max(28, word.xHeight * 0.3));
     const inkH = word.inkBottom - word.inkTop;
     const groupTop = groupMid - (inkH + gap + getH) / 2;
     const centre = groupTop - word.inkTop;

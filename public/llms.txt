@@ -1,0 +1,20 @@
+# Cairn
+
+> Cairn is a free, open source (MIT) Mac window manager that lives in the menu bar. It saves your window layout as a named stack and puts every window back with one click. macOS 12 or later, Apple Silicon and Intel.
+
+- Save the current window arrangement as a stack (for example one for coding, one for writing), or build one by hand on a visual canvas with a 12x8 snap grid.
+- Apply a stack from the menu bar: Cairn launches apps that are not running, waits for their windows, and moves and resizes everything into place.
+- Positions are stored as fractions of the screen, so a layout saved on a laptop still fits an external monitor. A stack can span two displays.
+- Needs only the macOS Accessibility permission. No analytics; the only network use is checking for updates.
+- It restores window positions only, not documents, tabs or Spaces.
+
+## Docs
+
+- [Documentation](https://cairnstacks.app/docs): install, quick start, stacks, editor, settings, troubleshooting, limitations
+- [Download Cairn.dmg](https://github.com/lukesj28/cairn/releases/latest/download/Cairn.dmg): latest signed and notarized release
+- [Source code](https://github.com/lukesj28/cairn): Swift, MIT license
+
+## Optional
+
+- [Website privacy](https://cairnstacks.app/privacy)
+- [Support the project](https://ko-fi.com/lukesj28)
