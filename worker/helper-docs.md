@@ -1,5 +1,11 @@
 ## Overview
-Cairn is a macOS menu bar app that remembers how you like your windows arranged and puts them back that way with one click. You save an arrangement as a named stack (for example one for coding, one for writing) and restore it from the menu bar instead of dragging windows into place by hand. Free and open source (MIT). Created by lukesj28 (github.com/lukesj28). Website: cairnstacks.app.
+Cairn is a Mac window manager that lives in the menu bar. It remembers how you like your windows arranged and puts them back that way with one click. You save an arrangement as a named stack (for example one for coding, one for writing) and restore it from the menu bar instead of dragging windows into place by hand. Free and open source (MIT). Created by lukesj28 (github.com/lukesj28). Website: cairnstacks.app.
+
+## Use cases
+Cairn is for people who use the same setups often. Save each setup as a stack, and then:
+- Open a whole setup in one click: applying a stack launches any app in it that is not running and puts every window in place.
+- Switch between setups in one click from the menu bar, for example from a coding setup to a writing setup.
+What Cairn is not for: it does not tile windows automatically as they open, does not reopen specific documents, tabs or folders, has no Spaces support, and cannot apply a stack on a schedule or when a display connects.
 
 ## Requirements
 macOS 12 (Monterey) or later. Apple Silicon and Intel. Mac only; there is no Windows, Linux, iPhone or iPad version. Needs Accessibility permission, asked on first launch.
@@ -82,6 +88,10 @@ Quit Cairn from the menu bar, drag Cairn.app to the Trash. Optionally delete ~/L
 ## Limitations
 Two displays maximum per stack. No progress indicator while applying and no failure message (missing app, no permission, window never appeared: it just stops). No shortcut for applying a specific stack. No undo anywhere. Positions only: no documents, tabs or Spaces. Cairn has no special handling for macOS Spaces (virtual desktops); it places the windows macOS reports for the current desktop. Apps that are not installed on this Mac are skipped. Apps with no New Window command may end up with fewer windows than the stack lists. Menu bar snapshots capture one display only. No way to hide the menu bar icon or show a Dock icon. Stacks cannot be reordered. No import or export button. No theme setting.
 
+## Compared to other window managers
+Cairn focuses on whole setups rather than single windows: you arrange your windows once, save every app and where its windows go as a named stack, and put it all back with one click, with Cairn launching any app that isn't running. Stacks are stored as fractions of the screen, so they fit any monitor and can span two displays, and everything is set up visually with no config files. Cairn is free and open source, and it doesn't rearrange new windows as they open.
+Other apps, for comparison: Rectangle and Magnet focus on snapping windows into set positions such as halves, thirds and corners, with keyboard shortcuts or by dragging a window to a screen edge. Rectangle can also tile the windows on a display into rows or columns; neither saves an arrangement to restore later, and saved layouts are part of the paid Rectangle Pro. Tiling window managers like yabai, AeroSpace and Amethyst tile windows automatically as they open and close, and are mostly driven from the keyboard. These are the only other apps covered here; for any other tool, say you don't have verified details on it and describe what Cairn does.
+
 ## Is Cairn free
 Yes. Free and open source under the MIT license; source at github.com/lukesj28/cairn. Optional support via the Support Cairn button in Settings or the buy me a coffee panel on the website (ko-fi.com/lukesj28).
 
@@ -111,3 +121,6 @@ cairnstacks.app is an interactive scroll-driven site. Scrolling, swiping, arrow 
 
 ## The helper
 The small flying character on the website is the helper. It answers questions about Cairn: common questions get instant written answers, and anything else goes to a small assistant that only knows Cairn. It only discusses Cairn, and it points to the docs page or the GitHub README when it is not sure. Messages are limited to 500 characters and the chat is rate limited per minute.
+
+## Website privacy
+This covers the cairnstacks.app website; the Cairn app itself is covered under Privacy and Permissions. The site sets no cookies and stores nothing in your browser. It counts anonymous, aggregate usage with Umami Cloud: page views and clicks such as downloads, helper topics and cairn stones. Nothing typed into the helper is sent to Umami, only a broad topic like installation. Helper messages, with up to three earlier exchanges, are sent to Cloudflare Workers AI to produce a reply; replies may be AI-generated, and the site does not store or log messages. Do not enter personal information. Your IP address is used only to rate-limit the helper per minute, through Cloudflare, and is not stored. The site and its videos are served by Cloudflare (cairnstacks.app and cdn.cairnstacks.app). Ko-fi loads only when you open the donate panel, and from then on Ko-fi's privacy policy applies. Full policy: cairnstacks.app/privacy.

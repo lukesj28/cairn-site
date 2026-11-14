@@ -4,7 +4,7 @@ import '@fontsource/fredoka/latin-700.css';
 import './style.css';
 import { CloudWord } from './cloud.js';
 import { Cairn } from './cairn.js';
-import { Helper } from './helper.js';
+import { Helper, OPEN_AFTER } from './helper.js';
 import { track } from './analytics.js';
 import arrowUp from '@phosphor-icons/core/bold/arrow-up-bold.svg?raw';
 import cross from '@phosphor-icons/core/bold/x-bold.svg?raw';
@@ -189,6 +189,9 @@ function rewind(v, t = 0) {
 let state = 0;
 let reachedHelper = false;
 let moving = null;
+const HOLD_MS = 1500;
+let holdUntil = 0;
+const holding = (dir) => dir > 0 && performance.now() < holdUntil;
 
 async function transition(clipIn, fadeIn, next, nextAt, joinMs) {
   clipIn.preload = 'auto';
@@ -234,6 +237,7 @@ async function step(dir) {
   signoff.classList.toggle('is-here', state === 2);
   if (state === 2) cairn.enter();
   get.inert = state !== 0;
+  holdUntil = state === 1 && dir > 0 ? performance.now() + OPEN_AFTER + HOLD_MS : 0;
   helper.arrive(state);
   return true;
 }
@@ -255,8 +259,11 @@ addEventListener(
   'wheel',
   (e) => {
     if (e.ctrlKey || kofi.open) return;
-    const says = e.target instanceof Element && e.target.closest('.helper__say');
-    if (says && says.scrollHeight > says.clientHeight) return;
+    const bubble = e.target instanceof Element && e.target.closest('.helper__bubble');
+    if (bubble) {
+      if (!e.target.closest('.helper__say')) e.preventDefault();
+      return;
+    }
     e.preventDefault();
     clearTimeout(wheelQuiet);
     wheelQuiet = setTimeout(() => {
@@ -268,6 +275,7 @@ addEventListener(
     wheelSum += e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? innerHeight : 1);
     if (Math.abs(wheelSum) < 8) return;
     wheelSpent = true;
+    if (holding(Math.sign(wheelSum))) return;
     step(Math.sign(wheelSum));
   },
   { passive: false },
@@ -288,6 +296,7 @@ addEventListener(
     const dy = touchY - e.touches[0].clientY;
     if (Math.abs(dy) < 24) return;
     touchY = null;
+    if (holding(Math.sign(dy))) return;
     step(Math.sign(dy));
   },
   { passive: true },

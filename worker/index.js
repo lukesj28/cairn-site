@@ -1,4 +1,5 @@
 import { FAQ, TOPIC, OFFTOPIC, CONTEXT, DOC_CHUNKS, VIDEOS } from './faq.js'
+import { norm, SUGGESTIONS } from '../shared/suggestions.js'
 
 const MODEL = '@cf/zai-org/glm-4.7-flash'
 const MAX_TOKENS = 256
@@ -13,9 +14,12 @@ const DOC_TOP_K = 3
 const CHAT_WORDS = 4
 const FOLLOWUP = /^\s*(and|also|but|so|then|what about|how about|that|those|it|this|these)\b/i
 const REFUSAL = 'I can only help with questions about cairn.'
-const CREATIVE = /\b(poem|haiku|limerick|joke|lyrics|riddle|essay|short story)\b|\bwrite (me )?(a |an |some )?(python|javascript|swift|code|script|function|program)/i
+const CREATIVE = /\b(poem|haiku|limerick|joke|lyrics|riddle|essay|short story)\b|\btranslate\b[^.?!]*\b(into|in)\b|\bwrite (me )?(a |an |some )?(python|javascript|swift|code|script|function|program)/i
 const CUE = /cairn|\bstacks?\b|snapshot|sparkle|accessibility|menu ?bar|snap grid/i
 
+const EXACT = new Map(FAQ.flatMap((f) => f.q.map((q) => [norm(q), f])))
+for (const s of SUGGESTIONS) if (!EXACT.has(norm(s))) throw new Error(`suggestion has no FAQ entry: ${s}`)
+const faqReply = (f, videos) => json({ source: 'faq', reply: videos && f.shown ? f.shown : f.a, video: f.video })
 const texts = [...FAQ.flatMap((f) => f.q), ...TOPIC, ...OFFTOPIC]
 const kinds = [...FAQ.flatMap((f, i) => f.q.map(() => i)), ...TOPIC.map(() => -1), ...OFFTOPIC.map(() => -2)]
 let refs
@@ -185,6 +189,9 @@ async function chat(request, env, ctx) {
     return text('message required', 400)
   }
   const videos = body?.videos === true
+  if (!/\p{L}{2}/u.test(message)) return json({ source: 'refusal', reply: REFUSAL })
+  const exact = EXACT.get(norm(message))
+  if (exact) return faqReply(exact, videos)
 
   const history = []
   if (Array.isArray(body?.history)) {
@@ -207,7 +214,6 @@ async function chat(request, env, ctx) {
     }
   }
 
-  if (!/\p{L}{2}/u.test(message)) return json({ source: 'refusal', reply: REFUSAL })
 
   try {
     refs ??= stored(env, ctx, texts).catch((err) => {
@@ -226,7 +232,7 @@ async function chat(request, env, ctx) {
     const queryVec = embeddings[history.length ? 1 : 0]
     const m = score(message, embeddings[0], vecs)
     const followUp = history.length > 0 && FOLLOWUP.test(message)
-    if (!followUp && m.faq >= FAQ_SURE && m.gap >= FAQ_GAP) return json({ source: 'faq', reply: FAQ[m.top].a, video: FAQ[m.top].video })
+    if (!followUp && m.faq >= FAQ_SURE && m.gap >= FAQ_GAP) return faqReply(FAQ[m.top], videos)
     const g = followUp ? score(queryText, queryVec, vecs) : m
     if (CREATIVE.test(message) || (!CUE.test(message) && g.off - g.on >= OFF_MARGIN)) {
       return json({ source: 'refusal', reply: REFUSAL })

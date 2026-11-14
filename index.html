@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <script defer src="https://cloud.umami.is/script.js" data-website-id="d0187b34-49ab-498e-93b8-8c9a0388b030" data-domains="cairnstacks.app"></script>
     <title>Cairn | Free Mac Window Manager to Save and Restore Layouts</title>
@@ -88,7 +89,8 @@
             <p class="helper__say" aria-live="polite"></p>
           </div>
           <form class="helper__ask" data-no-swipe inert>
-            <input type="text" name="q" placeholder="ask about cairn" aria-label="Ask a question about cairn" maxlength="500" autocomplete="off" enterkeyhint="send" />
+            <div class="helper__chips" role="group" aria-label="Suggested questions"></div>
+            <input type="text" name="q" placeholder="type a question about cairn" aria-label="Ask a question about cairn" maxlength="500" autocomplete="off" enterkeyhint="send" />
             <button type="submit" class="helper__send" aria-label="Ask" data-icon="arrow-up"></button>
             <p class="helper__note">answers may be AI-generated · <a href="/privacy">privacy</a></p>
           </form>
@@ -104,6 +106,7 @@
             </div>
             <div class="helper__glints" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
           </figure>
+          <section class="helper__coffee" aria-label="buy me a coffee" inert hidden></section>
         </div>
         <canvas id="cairn" aria-hidden="true"></canvas>
         <div id="stones" class="stones" role="group" aria-label="The cairn" inert></div>

@@ -1,10 +1,12 @@
 import { Perch, Flyer } from './fox.js';
 import { track, topicOf } from './analytics.js';
+import { norm, SUGGESTIONS } from '../shared/suggestions.js';
 
 const SRC_W = 1920;
 const SRC_H = 1080;
 const ARRIVE_MS = 2100;
 const THINK_AFTER = 700;
+export const OPEN_AFTER = 200;
 const NEAR = 0.55;
 const LEDGE = 668 / 726;
 const FRAME = {
@@ -21,8 +23,8 @@ const SVG = 'http://www.w3.org/2000/svg';
 const NARROW = 700;
 const README = 'https://github.com/lukesj28/cairn';
 const LINES = {
-  intro: 'hi! I’m an AI helper for cairn. ask me anything, or scroll down to the cairn to explore on your own.',
-  introTouch: 'hi! I’m an AI helper for cairn. ask me anything, or swipe up to the cairn to explore on your own.',
+  intro: 'hi! I’m cairn’s AI helper. ask me anything about the app, or scroll down to the stones to explore on your own.',
+  introTouch: 'hi! I’m cairn’s AI helper. ask me anything about the app, or swipe up to the stones to explore on your own.',
   winded: 'phew, my wings need a rest. give me a minute, then ask again.',
   lost: `I dropped my notes mid-flight. try again, or the README has it all: ${README}`,
   tired: 'I’ve answered all I can for today. the docs have everything: https://cairnstacks.app/docs',
@@ -38,8 +40,10 @@ const TUTORIALS = {
   apply: 'applying a stack from the menu bar',
   'add-app': 'adding apps, resizing tiles and using two displays in the editor',
 };
+const ATTACHMENTS = new Set([...Object.keys(TUTORIALS), 'kofi']);
 const CAIRN_LEFT = 898;
 const CLIP = { max: 520, min: 260, gap: 32, edge: 32, aspect: 3 / 2 };
+const KOFI = { w: 420, h: 640 };
 
 function isAllowedUrl(urlStr) {
   try {
@@ -67,6 +71,10 @@ function frameGeo({ w, h, box }, s) {
   return { fw, fh, x: box[0] * fw, y: box[1] * fh, w: (box[2] - box[0]) * fw, h: (box[3] - box[1]) * fh };
 }
 
+function voice(text) {
+  return text.toLowerCase().replace(/\bai\b/g, 'AI');
+}
+
 function words(text) {
   const out = [];
   let at = 0;
@@ -78,10 +86,10 @@ function words(text) {
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
     a.textContent = label(url);
-    out.push(text.slice(at, m.index).toLowerCase(), a);
+    out.push(voice(text.slice(at, m.index)), a);
     at = m.index + url.length;
   }
-  out.push(text.slice(at).toLowerCase());
+  out.push(voice(text.slice(at)));
   return out;
 }
 
@@ -103,10 +111,30 @@ export class Helper {
     this.bubble.append(this.tail);
     this.asked = root.querySelector('.helper__asked');
     this.says = root.querySelector('.helper__say');
+    this.chips = root.querySelector('.helper__chips');
+    for (const q of SUGGESTIONS) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'helper__chip';
+      b.textContent = q;
+      b.addEventListener('click', (e) => {
+        track('ai_suggestion_clicked', { suggestion: q });
+        if (e.detail === 0) this.input.focus({ preventScroll: true });
+        this.#ask(q);
+      });
+      this.chips.append(b);
+    }
     this.form = root.querySelector('.helper__ask');
     this.input = this.form.querySelector('input');
     this.clip = root.querySelector('.helper__clip');
     this.video = this.clip.querySelector('video');
+    this.coffee = root.querySelector('.helper__coffee');
+    const dialog = document.getElementById('kofi');
+    const head = dialog.querySelector('.kofi__head').cloneNode(true);
+    head.querySelector('h2').removeAttribute('id');
+    this.coffeeFrame = dialog.querySelector('iframe').cloneNode();
+    this.coffee.append(head, this.coffeeFrame);
+    head.querySelector('.kofi__close').addEventListener('click', () => this.#coffee(false));
     this.clipFits = false;
     this.bareControls = null;
     this.clip.querySelector('.helper__clip-close').addEventListener('click', () => this.#tutorial(null));
@@ -130,9 +158,11 @@ export class Helper {
     } else {
       full.hidden = true;
     }
-    this.clip.addEventListener('transitionend', (e) => {
-      if (e.target === this.clip && e.propertyName === 'visibility' && !this.clip.classList.contains('is-open')) this.clip.hidden = true;
-    });
+    for (const el of [this.clip, this.coffee]) {
+      el.addEventListener('transitionend', (e) => {
+        if (e.target === el && e.propertyName === 'visibility' && !el.classList.contains('is-open')) el.hidden = true;
+      });
+    }
     this.video.addEventListener('error', () => this.#tutorial(null));
     this.video.addEventListener('play', () => this.video.controls && track('ai_tutorial_video_played', { video_id: this.clipId, video_title: TUTORIALS[this.clipId] }));
 
@@ -197,17 +227,22 @@ export class Helper {
     const cairnX = cover.x + CAIRN_LEFT * (cover.w / SRC_W);
     const cx = cairnX / 2;
     const cy = (head + vh - bar) / 2;
-    const cw = Math.min(
-      CLIP.max,
-      2 * (cx - CLIP.edge),
-      2 * (cairnX - CLIP.gap - cx),
-      2 * (vh - bar - CLIP.edge - cy) * CLIP.aspect,
-    );
+    const room = Math.min(2 * (cx - CLIP.edge), 2 * (cairnX - CLIP.gap - cx));
+    const cw = Math.min(CLIP.max, room, 2 * (vh - bar - CLIP.edge - cy) * CLIP.aspect);
     this.clipFits = !narrow && cw >= CLIP.min;
+    const kw = Math.min(KOFI.w, room);
+    const kTop = head + 24;
+    const kBottom = vh - bar - ASK.floor - ASK.h - 56;
+    const kh = Math.min(KOFI.h, kBottom - kTop);
     const c = this.clip.style;
     c.width = `${Math.round(cw)}px`;
     c.left = `${Math.round(cx - cw / 2)}px`;
     c.top = `${Math.round(cy - cw / CLIP.aspect / 2)}px`;
+    const cs = this.coffee.style;
+    cs.width = `${Math.round(kw)}px`;
+    cs.height = `${Math.round(kh)}px`;
+    cs.left = `${Math.round(cx - kw / 2)}px`;
+    cs.top = `${Math.round((kTop + kBottom - kh) / 2)}px`;
     if (!this.clipFits) this.#tutorial(null);
     this.#place();
   }
@@ -246,7 +281,7 @@ export class Helper {
     } else if (state === 1) {
       this.flyer.start();
       this.flyer.want = 'answer';
-      this.#after(800, () => this.#show(true));
+      this.#after(OPEN_AFTER, () => this.#show(true));
     }
   }
 
@@ -295,25 +330,48 @@ export class Helper {
     else if (on) this.#place();
   }
 
+  #reveal(el, on) {
+    if (on && el.hidden) {
+      el.hidden = false;
+      void el.offsetWidth;
+    }
+    el.classList.toggle('is-open', on);
+    el.inert = !on;
+  }
+
+  #coffee(on) {
+    const frame = this.coffeeFrame;
+    frame.onload = null;
+    if (!on) {
+      if (this.coffee.classList.contains('is-open')) this.#reveal(this.coffee, false);
+      return;
+    }
+    const open = () => {
+      this.#reveal(this.coffee, true);
+      track('ai_kofi_panel_rendered');
+    };
+    if (frame.src) open();
+    else {
+      frame.onload = open;
+      frame.src = frame.dataset.src;
+    }
+  }
+
   #tutorial(id) {
+    this.#coffee(id === 'kofi');
+    if (id === 'kofi') id = null;
     const v = this.video;
     v.onloadeddata = null;
     if (!id) {
-      this.clip.classList.remove('is-open');
-      this.clip.inert = true;
+      this.#reveal(this.clip, false);
       v.pause();
       return;
     }
     this.clip.setAttribute('aria-label', `video: ${TUTORIALS[id]}`);
     v.controls = this.reduceMotion.matches;
     v.onloadeddata = () => {
-      if (this.clip.hidden) {
-        this.clip.hidden = false;
-        void this.clip.offsetWidth;
-      }
-      this.clip.classList.add('is-open');
+      this.#reveal(this.clip, true);
       track('ai_tutorial_video_rendered', { video_id: id, video_title: TUTORIALS[id] });
-      this.clip.inert = false;
       if (!v.controls) v.play().catch(() => {});
     };
     this.clipId = id;
@@ -324,6 +382,7 @@ export class Helper {
     const greeting = text == null && !thinking;
     if (greeting) text = matchMedia('(pointer: coarse)').matches ? LINES.introTouch : LINES.intro;
     this.said = !greeting;
+    this.chips.hidden = thinking || [...this.chips.children].every((b) => b.hidden);
     this.asked.hidden = !asked;
     this.asked.textContent = asked;
     if (thinking) {
@@ -374,6 +433,8 @@ export class Helper {
     track('ai_query_topic', { topic: topicOf(q) });
     this.busy = true;
     this.input.value = '';
+    const chip = [...this.chips.children].find((b) => !b.hidden && norm(b.textContent) === norm(q));
+    if (chip) chip.hidden = true;
     this.#say({ asked: q, thinking: true });
     const think = setTimeout(() => {
       this.flyer.want = 'think';
@@ -410,8 +471,10 @@ export class Helper {
       clearTimeout(think);
     }
     if (fallback) track('ai_unanswered_fallback', { fallback_type: fallback });
-    this.flyer.want = text === LINES.lost || text === LINES.winded || text === LINES.tired ? 'idle' : 'answer';
+    const failed = text === LINES.lost || text === LINES.winded || text === LINES.tired;
+    if (failed && chip) chip.hidden = false;
+    this.flyer.want = failed ? 'idle' : 'answer';
     this.#say({ asked: q, text });
-    this.#tutorial(this.state === 1 && !this.moving && this.clipFits && Object.hasOwn(TUTORIALS, clip ?? '') ? clip : null);
+    this.#tutorial(this.state === 1 && !this.moving && this.clipFits && ATTACHMENTS.has(clip) ? clip : null);
   }
 }

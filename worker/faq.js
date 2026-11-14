@@ -10,12 +10,17 @@ export const VIDEOS = {
   snapshot: 'saving your windows with Snapshot to New Stack',
   apply: 'applying a stack from the menu bar',
   'add-app': 'adding apps, resizing tiles and using two displays in the editor',
+  kofi: 'the buy me a coffee panel on Ko-fi, for donating to or tipping the developer',
 }
 
 export const FAQ = [
   {
-    q: ['What is cairn?', 'What does cairn do?', 'Tell me about cairn', 'What is this app for?', 'What does this app do?', 'Explain cairn to me', 'What is this?', 'What is this thing?', 'Why would I use cairn?', 'What is cairn for?', 'what is this', 'so what does this thing do exactly', 'why would i use this'],
-    a: 'Cairn is a macOS menu bar app that saves your window arrangement as a named stack and puts every window back with one click.',
+    q: ['What is cairn?', 'What does cairn do?', 'Tell me about cairn', 'What is this app for?', 'What does this app do?', 'Explain cairn to me', 'What is this?', 'What is this thing?', 'What is cairn for?', 'so what does this thing do exactly'],
+    a: 'Cairn is a Mac window manager in your menu bar that saves your window arrangement as a named stack and puts every window back with one click.',
+  },
+  {
+    q: ['What are the use cases for cairn?', 'Why would I use cairn?', 'why would i use this', 'What is this good for?', 'What is cairn good for?', 'What can I use cairn for?', 'Who is cairn for?', 'Who is this for?', 'When would I use cairn?', 'Give me some examples of how to use cairn', 'What are some example stacks?', 'What are the use cases?', 'How do people use cairn?', 'Is cairn useful for developers?'],
+    a: 'Cairn is for people who use the same setups often. Save each one as a stack, then open the whole setup in one click, launching any apps that are not running, or switch between setups from the menu bar.',
   },
   {
     q: ['What is a stack?', 'What does stack mean in cairn?', 'Explain stacks', 'What are stacks?', 'What is a layout in cairn?'],
@@ -36,7 +41,7 @@ export const FAQ = [
     a: 'Cairn needs macOS 12 (Monterey) or later and runs on Apple Silicon and Intel Macs. It is Mac only.',
   },
   {
-    q: ['Is cairn free?', 'How much does cairn cost?', 'Do I have to pay for it?', 'What is the price?', 'How much is it?', 'Is there a paid version or subscription?', 'Is there a pro version?', 'Are there in-app purchases?', 'Is it paid?', 'does it cost money'],
+    q: ['Is cairn free?', 'How much does cairn cost?', 'Do I have to pay for it?', 'What is the price?', 'How much is it?', 'Is there a paid version or subscription?', 'Is there a pro version?', 'Are there in-app purchases?', 'Is it paid?', 'does it cost money', 'free?', 'Is it free?'],
     a: `Cairn is completely free and open source under the MIT license, with no paid version. Source: ${GH}`,
   },
   {
@@ -49,12 +54,16 @@ export const FAQ = [
     video: 'accessibility',
   },
   {
-    q: ['Does cairn collect my data?', 'Is cairn private?', 'Does it track me or send analytics?', 'Does cairn need internet access?', 'Does it spy on me?', 'Does it phone home?', 'Does it send my data anywhere?', 'What data does cairn collect?', 'Do you collect any info about me?', 'Is my information shared with anyone?'],
+    q: ['Does cairn collect my data?', 'Is cairn private?', 'Does it track me or send analytics?', 'Does cairn need internet access?', 'Does it spy on me?', 'Does it phone home?', 'Does it send my data anywhere?', 'What data does cairn collect?', 'Do you collect any info about me?', 'Is my information shared with anyone?', 'Does it need internet?', 'Does it work offline?'],
     a: 'Cairn collects no data. It has no analytics and never sends your layouts, windows or app usage anywhere. Its only network use is checking for updates.',
   },
   {
     q: ['Is cairn safe to install?', 'Can I trust cairn?', 'Is the app signed and notarized?', 'Is it safe?', 'Is cairn malware or a virus?', 'Is cairn legit?', 'Is cairn from an identified developer?'],
     a: `Cairn is open source (${GH}), asks for only the Accessibility permission, collects no data, and release builds are signed with a Developer ID and notarized by Apple.`,
+  },
+  {
+    q: ['macOS says cairn cannot be opened', 'macOS says it cant be opened', 'The dmg wont open', 'Cairn will not open', 'It says the app is damaged', 'macOS blocked cairn', 'Why does macOS warn me when I open cairn?', 'cairn cannot be opened because it is from an unidentified developer'],
+    a: `Cairn is notarized by Apple, so macOS only asks you to confirm the first time; click Open. If it still won't open, download it again from cairnstacks.app or report it at ${GH}/issues.`,
   },
   {
     q: ['How does cairn update?', 'Does cairn update automatically?', 'How do I get new versions of cairn?', 'How do I turn off auto updates?', 'Will it auto update?', 'How do I stop updates?', 'How do I check for updates?', 'What is Sparkle?'],
@@ -211,16 +220,42 @@ export const FAQ = [
     a: 'Cairn does not enforce a limit on stacks or windows.',
   },
   {
-    q: ['How does cairn compare to Rectangle or Magnet?', 'What makes cairn different?', 'How does it compare to Rectangle?', 'Cairn vs Magnet', 'Is it like Moom or Amethyst?', 'is it like magnet'],
-    a: 'I can only speak for Cairn: it saves a whole multi-app arrangement as a named stack, launches the apps that are not running, and restores everything with one click, across one or two displays.',
+    q: ['How does cairn compare to other window managers?', 'How is cairn different from other window managers?', 'What makes cairn different?', 'What makes it different?', 'What makes cairn special?', 'Why use cairn instead of other window apps?', 'Is it better than other window apps?', 'How does it compare to other apps?', 'Why should I choose cairn?'],
+    a: 'Cairn focuses on whole setups, not single windows: save every app and window as a named stack and put it all back with one click, launching apps that are not running. It is free and open source.',
+  },
+  {
+    q: ['How does cairn compare to Rectangle?', 'Is it like Rectangle?', 'Cairn vs Rectangle', 'Does Rectangle save layouts?', 'Is it like Rectangle Pro?', 'Why use cairn instead of Rectangle?', 'How does it compare to Rectangle?'],
+    a: 'Cairn restores whole layouts for free: every app and window back in place with one click. Rectangle focuses on snapping windows into halves and corners; saved layouts are in the paid Rectangle Pro.',
+  },
+  {
+    q: ['How does cairn compare to Magnet?', 'Is it like Magnet?', 'Cairn vs Magnet', 'Why use cairn instead of Magnet?', 'Does Magnet save layouts?'],
+    a: 'Cairn restores whole layouts for free: every app and window back in place with one click. Magnet focuses on snapping windows into halves, thirds and quarters, and does not save layouts.',
+  },
+  {
+    q: ['How is cairn different from a tiling window manager?', 'Cairn vs yabai', 'Is it like yabai?', 'Is it like AeroSpace?', 'Is it like Amethyst?', 'How does cairn compare to yabai, AeroSpace or Amethyst?', 'Why use cairn instead of a tiling window manager?'],
+    a: 'Cairn gives you layouts you design yourself, set up visually with no config files and restored with one click. yabai, AeroSpace and Amethyst instead tile windows automatically, mostly from the keyboard.',
+  },
+  {
+    q: ['Can cairn tile windows automatically?', 'Is cairn a tiling window manager?', 'Does cairn arrange new windows as they open?', 'Can cairn tile windows automatically like a tiling window manager?', 'Does it auto tile?'],
+    a: 'No. Cairn is not a tiling window manager and never moves windows by itself. It places windows only when you apply a stack, and new windows you open afterwards are left alone.',
+  },
+  {
+    q: ['How is cairn different from Moom?', 'Is it like BetterSnapTool?', 'Cairn vs Divvy', 'How does it compare to Spectacle?', 'Is it like Moom?'],
+    a: 'I don\'t have verified details on that app, but Cairn saves your whole setup as a named stack and puts every app back with one click, launching any that are not running.',
+  },
+  {
+    q: ['Does the website use cookies?', 'Is this chat private?', 'Do you store my messages?', 'Does the website track me?', 'Where do my chat messages go?', 'Is this chat logged?', 'What does the website collect?', 'Does the helper save what I type?'],
+    a: 'The website sets no cookies and only counts anonymous visits. Helper messages go to Cloudflare Workers AI for a reply and are not stored, so please don\'t share personal info. Details: https://cairnstacks.app/privacy',
   },
   {
     q: ['How do I report a bug?', 'How do I request a feature?', 'Where can I get support?', 'Who do I contact for help?', 'How to report a bug', 'I found a bug', 'I have a feature suggestion'],
     a: `Open an issue on GitHub: ${GH}/issues`,
   },
   {
-    q: ['How can I support the project?', 'Where can I donate?', 'How do I buy you a coffee?', 'Is there a Ko-fi?', 'How can I donate?', 'Can I tip the developer?'],
+    q: ['How can I support the project?', 'Where can I donate?', 'How do I buy you a coffee?', 'Is there a Ko-fi?', 'How can I donate?', 'Can I tip the developer?', 'I want to donate', 'Can I donate?', 'How do I support the developer?', 'Buy me a coffee', 'Can I buy you a coffee?', 'I want to support cairn', 'How can I support?', 'How can I support you?', 'How can I support cairn?', 'How do I support cairn?', 'Can I support you?'],
     a: 'Click Support Cairn in Settings, use the bottom stone on the website for the buy me a coffee panel, or go to https://ko-fi.com/lukesj28. Thank you!',
+    shown: 'Here is the buy me a coffee panel. Thank you for supporting Cairn!',
+    video: 'kofi',
   },
   {
     q: ['How do I build cairn from source?', 'How do I compile it myself?', 'What do I need to build cairn?', 'How do I build it from source?', 'Can I compile the code myself?'],
@@ -303,12 +338,12 @@ export const FAQ = [
   },
   {
     chat: true,
-    q: ['Who are you?', 'What can you help with?', 'What can I ask you?', 'What are you?', 'What can you do?', 'Are you a bot?', 'Are you a real person?', 'who are you'],
+    q: ['Who are you?', 'What can you help with?', 'What can I ask you?', 'What are you?', 'What can you do?', 'Are you a bot?', 'Are you a real person?'],
     a: 'I\'m the helper on the cairn website. Ask me anything about Cairn: installing it, how stacks work, displays, shortcuts, updates, privacy or troubleshooting.',
   },
   {
     chat: true,
-    q: ['hi', 'hello', 'hey there', 'good morning', 'yo', 'hey', 'hi there', 'hello!', 'hello there'],
+    q: ['hi', 'hello', 'hey there', 'good morning', 'yo', 'hey', 'hi there', 'hello there'],
     a: 'Hi! I can answer questions about Cairn, the macOS window layout app. What would you like to know?',
   },
   {
@@ -341,6 +376,9 @@ export const TOPIC = [
   'cairn website helper and docs',
   'moving and resizing app windows with one click',
   'productivity setup for coding and writing on a Mac',
+  'use cases and example workflows for a window layout app',
+  'comparing Mac window managers like Rectangle, Magnet, yabai, AeroSpace or Amethyst',
+  'privacy of this website and helper chat',
 ]
 
 export const OFFTOPIC = [
@@ -355,6 +393,7 @@ export const OFFTOPIC = [
   'what is two plus two or 2+2',
   'solve this math problem',
   'translate this text into French',
+  'translate cairn or a word into another language',
   'write a python script or debug code',
   'how do I center a div in CSS',
   'how to build a website or use React',
@@ -365,6 +404,7 @@ export const OFFTOPIC = [
   'how do I take a screenshot on a Mac',
   'how do I free up disk space or fix battery',
   'how do I tile windows on Windows 11',
+  'how do I snap or arrange windows on a Windows PC',
   'best window manager for Linux',
   'recommend a monitor to buy',
   'what is ChatGPT or what AI model are you',
@@ -378,4 +418,4 @@ export const OFFTOPIC = [
 export const CONTEXT =
   'You are the helper on the cairn website. Cairn is a free, open source (MIT) macOS menu bar app by lukesj28 that saves window arrangements as named stacks and restores them with one click. ' +
   'If asked who made, created, or built cairn, answer only "lukesj28" (https://github.com/lukesj28); never give any other name. ' +
-  'Answer only from the canned answers and documentation provided below. If they do not cover the question, say "I\'m not sure about that" and point to https://cairnstacks.app/docs or https://github.com/lukesj28/cairn. Never fill gaps with general knowledge about other apps or macOS, and never invent features, buttons, menu names, shortcuts, settings or URLs.'
+  'Answer only from the canned answers and documentation provided below. If they do not cover the question, say "I\'m not sure about that" and point to https://cairnstacks.app/docs or https://github.com/lukesj28/cairn. Never fill gaps with general knowledge about other apps or macOS, and never invent features, buttons, menu names, shortcuts, settings or URLs. Describe other apps only with what the documentation below says about them; never describe an app it does not name. When comparing, lead with what Cairn does and keep any other app to one short clause.'
