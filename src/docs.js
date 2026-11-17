@@ -6,8 +6,9 @@ import caretDown from '@phosphor-icons/core/bold/caret-down-bold.svg?raw';
 import link from '@phosphor-icons/core/bold/link-bold.svg?raw';
 import copy from '@phosphor-icons/core/bold/copy-bold.svg?raw';
 import check from '@phosphor-icons/core/bold/check-bold.svg?raw';
+import cross from '@phosphor-icons/core/bold/x-bold.svg?raw';
 
-const ICONS = { github, 'caret-down': caretDown, link, copy, check };
+const ICONS = { github, 'caret-down': caretDown, link, copy, check, x: cross };
 const icon = (el, name) => (el.innerHTML = ICONS[name]);
 for (const el of document.querySelectorAll('[data-icon]')) icon(el, el.dataset.icon);
 
@@ -23,14 +24,21 @@ async function put(text) {
   }
 }
 
-function confirm(button, glyph, rest, words) {
-  icon(glyph, 'check');
-  button.classList.add('is-done');
-  said.textContent = words;
+let lastSaid = '';
+
+function report(button, glyph, rest, ok, done) {
+  let words = ok ? done : 'Copy failed';
+  icon(glyph, ok ? 'check' : 'x');
+  button.classList.toggle('is-done', ok);
+  button.classList.toggle('is-failed', !ok);
+  if (words === lastSaid) words += '\u00A0';
+  lastSaid = words;
+  said.textContent = '';
+  requestAnimationFrame(() => (said.textContent = words));
   clearTimeout(button.timer);
   button.timer = setTimeout(() => {
     icon(glyph, rest);
-    button.classList.remove('is-done');
+    button.classList.remove('is-done', 'is-failed');
     said.textContent = '';
   }, DONE_MS);
 }
@@ -44,7 +52,7 @@ for (const h of document.querySelectorAll('.page :is(h2, h3)[id]')) {
   const glyph = a.firstChild;
   icon(glyph, 'link');
   a.addEventListener('click', async () => {
-    if (await put(a.href)) confirm(a, glyph, 'link', 'Link copied');
+    report(a, glyph, 'link', await put(a.href), 'Link copied');
   });
   h.append(a);
 }
@@ -53,8 +61,26 @@ for (const b of document.querySelectorAll('.copy')) {
   const glyph = b.querySelector('.icon');
   b.addEventListener('click', async () => {
     const text = b.parentElement.querySelector('code').textContent;
-    if (await put(text)) confirm(b, glyph, 'copy', 'Copied');
+    report(b, glyph, 'copy', await put(text), 'Copied');
   });
+}
+
+const scrollLabels = new Map();
+const scrollable = new ResizeObserver((entries) => {
+  for (const { target: el } of entries) {
+    const label = scrollLabels.get(el);
+    if (el.scrollWidth > el.clientWidth) {
+      el.setAttribute('tabindex', '0');
+      if (label) el.setAttribute('role', 'region'), el.setAttribute('aria-labelledby', label);
+    } else {
+      el.removeAttribute('tabindex');
+      if (label) el.removeAttribute('role'), el.removeAttribute('aria-labelledby');
+    }
+  }
+});
+for (const el of document.querySelectorAll('.table, .code pre')) {
+  if (el.matches('.table')) scrollLabels.set(el, el.closest('[aria-labelledby]')?.getAttribute('aria-labelledby'));
+  scrollable.observe(el);
 }
 
 const rail = document.querySelector('.rail');
@@ -81,13 +107,27 @@ narrow.addEventListener('change', () => open(false));
 
 let current = null;
 let queued = false;
+const LINE = 30;
+const passed = new Set(
+  marks.filter((m) => m.el.getBoundingClientRect().top <= (innerHeight * LINE) / 100).map((m) => m.el),
+);
+const watch = new IntersectionObserver(
+  (entries) => {
+    for (const e of entries) {
+      if (e.isIntersecting) passed.add(e.target);
+      else passed.delete(e.target);
+    }
+    queue();
+  },
+  { rootMargin: `100000px 0px -${100 - LINE}% 0px` },
+);
+for (const m of marks) watch.observe(m.el);
 
 function spy() {
   queued = false;
-  const line = innerHeight * 0.3;
   let at = marks[0];
   for (const m of marks) {
-    if (m.el.getBoundingClientRect().top > line) break;
+    if (!passed.has(m.el)) break;
     at = m;
   }
   if (innerHeight + scrollY >= document.documentElement.scrollHeight - 2) at = marks[marks.length - 1];

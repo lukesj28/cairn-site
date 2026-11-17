@@ -220,6 +220,10 @@ export const FAQ = [
     a: 'Cairn does not enforce a limit on stacks or windows.',
   },
   {
+    q: ['Are there any limitations?', 'What are the limitations?', 'Any limitations?', 'What can\'t cairn do?', 'What can\'t it do?', 'What cant it do?', 'What doesn\'t cairn do?', 'What are the downsides of cairn?', 'What are the known issues?'],
+    a: 'Cairn keeps its scope small on purpose. A stack covers one or two displays, which fits almost every desk setup, and it restores where windows sit rather than which documents or tabs they show.',
+  },
+  {
     q: ['How does cairn compare to other window managers?', 'How is cairn different from other window managers?', 'What makes cairn different?', 'What makes it different?', 'What makes cairn special?', 'Why use cairn instead of other window apps?', 'Is it better than other window apps?', 'How does it compare to other apps?', 'Why should I choose cairn?'],
     a: 'Cairn focuses on whole setups, not single windows: save every app and window as a named stack and put it all back with one click, launching apps that are not running. It is free and open source.',
   },
@@ -250,6 +254,10 @@ export const FAQ = [
   {
     q: ['How do I report a bug?', 'How do I request a feature?', 'Where can I get support?', 'Who do I contact for help?', 'How to report a bug', 'I found a bug', 'I have a feature suggestion'],
     a: `Open an issue on GitHub: ${GH}/issues`,
+  },
+  {
+    q: ['How do I contact you?', 'How can I contact you?', 'What is your email?', 'What is your email address?', 'Is there a contact email?', 'How do I get in touch?', 'How do I email you?', 'Contact email'],
+    a: `Email hello@cairnstacks.app. Bugs and feature requests can also go to ${GH}/issues`,
   },
   {
     q: ['How can I support the project?', 'Where can I donate?', 'How do I buy you a coffee?', 'Is there a Ko-fi?', 'How can I donate?', 'Can I tip the developer?', 'I want to donate', 'Can I donate?', 'How do I support the developer?', 'Buy me a coffee', 'Can I buy you a coffee?', 'I want to support cairn', 'How can I support?', 'How can I support you?', 'How can I support cairn?', 'How do I support cairn?', 'Can I support you?'],

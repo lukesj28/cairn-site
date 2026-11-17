@@ -113,7 +113,6 @@
             <h2>Help</h2>
             <ul>
               <li><a href="#uninstalling">Uninstalling</a></li>
-              <li><a href="#limitations">Limitations</a></li>
               <li><a href="#faq">FAQ</a></li>
               <li><a href="#troubleshooting">Troubleshooting</a></li>
               <li><a href="#support">Support</a></li>
@@ -422,26 +421,6 @@
             </ol>
           </section>
 
-          <section aria-labelledby="limitations">
-            <h2 id="limitations">Limitations</h2>
-            <ul>
-              <li>
-                <strong>Two displays, not an arbitrary number.</strong> A stack can target one or two screens, which
-                covers the vast majority of real desk setups. Supporting more is a possibility down the line, but
-                hasn’t come up as something people actually need yet.
-              </li>
-              <li>
-                <strong>No progress indicator while applying.</strong> Cairn negotiates window placement in the
-                background without showing you that it’s working. Most layouts settle in well under a second anyway,
-                but it’s a rough edge worth knowing about, not a deliberate design choice.
-              </li>
-              <li>
-                <strong>No shortcut for applying a specific stack.</strong> You can set one for snapshotting a new
-                stack, but applying one of your saved stacks is menu-bar only for now.
-              </li>
-            </ul>
-          </section>
-
           <section aria-labelledby="faq">
             <h2 id="faq">FAQ</h2>
 
@@ -507,6 +486,10 @@
           <section aria-labelledby="support">
             <h2 id="support">Support</h2>
             <ul>
+              <li>
+                <strong>Contact:</strong>
+                <a href="mailto:hello@cairnstacks.app">hello@cairnstacks.app</a>
+              </li>
               <li>
                 <strong>Bugs and feature requests:</strong>
                 <a href="https://github.com/lukesj28/cairn/issues">open an issue on GitHub</a>
@@ -611,6 +594,6 @@
       </main>
     </div>
 
-    <p class="visually-hidden" role="status" aria-live="polite" id="said"></p>
+    <p class="said" role="status" aria-live="polite" id="said"></p>
   </body>
 </html>

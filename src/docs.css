@@ -107,6 +107,25 @@ a:hover {
   white-space: nowrap;
 }
 
+.said {
+  position: fixed;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  left: 50%;
+  z-index: 30;
+  margin: 0;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--ground);
+  font-size: 0.875rem;
+  font-weight: 600;
+  translate: -50% 0;
+  pointer-events: none;
+}
+.said:empty {
+  opacity: 0;
+}
+
 .skip {
   position: fixed;
   left: 16px;
@@ -406,7 +425,8 @@ strong {
 }
 :is(h2, h3):hover > .anchor,
 .anchor:focus-visible,
-.anchor.is-done {
+.anchor.is-done,
+.anchor.is-failed {
   opacity: 1;
 }
 .anchor:hover {
@@ -854,5 +874,11 @@ td em {
   }
   .page {
     max-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition {
+    navigation: auto;
   }
 }

@@ -10,7 +10,7 @@
 
 ## Docs
 
-- [Documentation](https://cairnstacks.app/docs): install, quick start, stacks, editor, settings, troubleshooting, limitations
+- [Documentation](https://cairnstacks.app/docs): install, quick start, stacks, editor, settings and troubleshooting
 - [Download Cairn.dmg](https://github.com/lukesj28/cairn/releases/latest/download/Cairn.dmg): latest signed and notarized release
 - [Source code](https://github.com/lukesj28/cairn): Swift, MIT license
 

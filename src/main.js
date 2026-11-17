@@ -100,7 +100,9 @@ stones.addEventListener('stone', ({ detail: { name } }) => {
   kofi.showModal();
 });
 kofi.querySelector('.kofi__close').addEventListener('click', () => kofi.close());
-kofi.addEventListener('click', (e) => e.target === kofi && kofi.close());
+if (!('closedBy' in HTMLDialogElement.prototype)) {
+  kofi.addEventListener('click', (e) => e.target === kofi && kofi.close());
+}
 
 const poster = new Image();
 poster.src = t1Fwd.poster = `${HERO_BASE}/poster.webp`;

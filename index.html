@@ -53,7 +53,7 @@
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="The word cairn written in clouds on a blue sky above a Download for Mac button, with a small winged fox." />
     <meta name="twitter:card" content="summary_large_image" />
-    <link rel="preload" as="image" href="https://cdn.cairnstacks.app/hero/poster.webp" />
+    <link rel="preload" as="image" href="https://cdn.cairnstacks.app/hero/poster.webp" fetchpriority="high" />
   </head>
   <body>
     <header class="head">
@@ -140,7 +140,7 @@
       <a class="foot__privacy" href="/privacy" data-umami-event="fallback_nav_clicked" data-umami-event-destination="/privacy">Privacy</a>
       <p><span class="foot__own">© 2026 Cairn · </span><a href="https://github.com/lukesj28/cairn/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" data-umami-event="fallback_nav_clicked" data-umami-event-destination="https://github.com/lukesj28/cairn/blob/main/LICENSE">MIT license</a></p>
     </footer>
-    <dialog id="kofi" class="kofi" aria-labelledby="kofi-title">
+    <dialog id="kofi" class="kofi" aria-labelledby="kofi-title" closedby="any">
       <header class="kofi__head">
         <h2 id="kofi-title">buy me a coffee</h2>
         <button type="button" class="kofi__close" aria-label="Close" data-icon="x"></button>
